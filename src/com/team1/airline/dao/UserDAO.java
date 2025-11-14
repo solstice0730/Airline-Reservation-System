@@ -1,11 +1,14 @@
 package com.team1.airline.dao;
 
-import java.io.BufferedReader; 
-import java.io.FileReader;     
-import java.io.IOException;
+import com.team1.airline.entity.User;
+import java.util.List;
 
 public interface UserDAO {
-    void openFile();
-    void addUser(); // 회원가입하여 User의 파일에 추가할떄 쓰이는 메서드 
-    void findByUserId(); // 로그인 비교할떄 쓰이는 메서드 
+    void saveUser(User user);
+    User findByUserId(String userId);
+    List<User> findAll();
+    void updateUser(User user);
+    void deleteUser(String userId);
+    User findByEmail(String email);
+    User findByUsername(String username);
 }
