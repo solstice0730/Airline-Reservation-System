@@ -7,6 +7,7 @@ import com.team1.airline.service.ReservationManageable;
 import com.team1.airline.service.FlightManageable; // 좌석 확인을 위해
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID; // 예약 ID 생성을 위해
 
 public class ReservationManager implements ReservationManageable {

@@ -14,7 +14,7 @@ public interface FlightManageable {
      * R (Read) - 항공편 검색 비즈니스 로직
      * @param departureCode 출발 공항 코드 (예: "ICN")
      * @param arrivalCode 도착 공항 코드 (예: "JFK")
-     * @param date 출발 날짜
+     * @param date 출발 날짜 (null일 경우 날짜 조건 없이 검색)
      * @return 검색 조건에 맞는 항공편 리스트
      */
     List<Flight> searchFlights(String departureCode, String arrivalCode, LocalDate date);

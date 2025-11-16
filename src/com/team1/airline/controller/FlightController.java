@@ -26,30 +26,29 @@ public class FlightController {
         this.flightService = flightService;
     }
     
-    /**
-     * 항공편 검색
-     * @param departureCode 출발지 공항 코드 
-     * @param arrivalCode 도착지 공항 코드 
-     * @param date 출발 날짜
-     * @return 검색된 항공편 목록
-     */
-    public List<Flight> searchFlights(String departureCode, String arrivalCode, LocalDate date) {
-        System.out.println("[FlightController] 항공편 검색: " + 
-                         departureCode + " -> " + arrivalCode + 
-                         " on " + date);
-        
-        List<Flight> flights = flightService.searchFlights(departureCode, arrivalCode, date);
-        
-        if (flights.isEmpty()) {
-            System.out.println("[FlightController] 검색 결과가 없습니다.");
-        } else {
-            System.out.println("[FlightController] " + flights.size() + "개의 항공편을 찾았습니다.");
-        }
-        
-        return flights;
-    }
+        /**
+         * 항공편 검색
+         * @param departureCode 출발지 공항 코드
+         * @param arrivalCode 도착지 공항 코드
+         * @param date 출발 날짜 (null일 수 있음)
+         * @return 검색된 항공편 목록
+         */
+        public List<Flight> searchFlights(String departureCode, String arrivalCode, LocalDate date) {
+            System.out.println("[FlightController] 항공편 검색: " +
+                             departureCode + " -> " + arrivalCode +
+                             " on " + (date != null ? date : "모든 날짜"));
+            System.out.println("[FlightController] Calling flightService.searchFlights with: departureCode=" + departureCode + ", arrivalCode=" + arrivalCode + ", date=" + date);
     
-    /**
+            List<Flight> flights = flightService.searchFlights(departureCode, arrivalCode, date);
+    
+            if (flights.isEmpty()) {
+                System.out.println("[FlightController] 검색 결과가 없습니다.");
+            } else {
+                System.out.println("[FlightController] " + flights.size() + "개의 항공편을 찾았습니다.");
+            }
+    
+            return flights;
+        }    /**
      * 항공편 상세 정보 조회
      * @param flightId 항공편 ID
      * @return 항공편 정보 (없으면 null)

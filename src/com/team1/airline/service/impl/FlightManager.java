@@ -36,12 +36,14 @@ public class FlightManager implements FlightManageable {
      */
     @Override
     public List<Flight> searchFlights(String departureCode, String arrivalCode, LocalDate date) {
-        
+        System.out.println("FlightManager: searchFlights called with: departureCode=" + departureCode + ", arrivalCode=" + arrivalCode + ", date=" + date);
+
         // ★★★ 항공편 검색 '비즈니스 로직' ★★★
 
         // 1. DAO를 통해 '노선'을 먼저 찾습니다. (예: 인천 -> 뉴욕)
         List<Route> routes = routeDAO.findRoutesByAirports(departureCode, arrivalCode);
-        
+        System.out.println("FlightManager: Found " + (routes != null ? routes.size() : 0) + " routes for " + departureCode + " -> " + arrivalCode);
+
         // 2. 비즈니스 규칙: 노선이 아예 없으면 빈 리스트 반환
         if (routes == null || routes.isEmpty()) {
             System.out.println("FlightManager: 해당 노선이 없습니다.");
@@ -51,16 +53,26 @@ public class FlightManager implements FlightManageable {
         // 3. 찾은 노선들(routeId)과 날짜(date)를 기준으로 '실제 항공편'을 검색합니다.
         List<Flight> availableFlights = new ArrayList<>();
         for (Route route : routes) {
-            List<Flight> flightsOnRoute = flightDAO.findFlightsByRouteAndDate(route.getRouteId(), date);
+            List<Flight> flightsOnRoute;
+            if (date == null) {
+                flightsOnRoute = flightDAO.findFlightsByRoute(route.getRouteId());
+                System.out.println("FlightManager: Found " + (flightsOnRoute != null ? flightsOnRoute.size() : 0) + " flights on route " + route.getRouteId() + " for ALL dates (date was null).");
+            } else {
+                flightsOnRoute = flightDAO.findFlightsByRouteAndDate(route.getRouteId(), date);
+                System.out.println("FlightManager: Found " + (flightsOnRoute != null ? flightsOnRoute.size() : 0) + " flights on route " + route.getRouteId() + " for date " + date);
+            }
             if (flightsOnRoute != null) {
                 availableFlights.addAll(flightsOnRoute);
             }
         }
-        
+        System.out.println("FlightManager: Total available flights before filtering status: " + availableFlights.size());
+
         // 4. 비즈니스 규칙: "Scheduled" (예약 가능) 상태인 항공편만 필터링
-        return availableFlights.stream()
-                .filter(flight -> "Scheduled".equals(flight.getStatus()))
+        List<Flight> finalFlights = availableFlights.stream()
+                .filter(flight -> "예약 가능".equals(flight.getStatus())) // Changed from "Scheduled" to "예약 가능"
                 .collect(Collectors.toList());
+        System.out.println("FlightManager: Final flights after status filtering: " + finalFlights.size());
+        return finalFlights;
     }
 
     @Override

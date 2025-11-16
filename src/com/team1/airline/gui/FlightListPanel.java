@@ -1,4 +1,4 @@
-package GUI;
+package com.team1.airline.gui;
 
 import javax.swing.*;
 import javax.swing.border.Border;

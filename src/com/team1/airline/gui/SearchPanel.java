@@ -1,10 +1,11 @@
-package GUI;
+package com.team1.airline.gui;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List; // Added missing import
 
 /**
  * 1. 항공권 검색 (메인) 화면
@@ -127,7 +128,33 @@ public class SearchPanel extends JPanel {
         row.add(textField, BorderLayout.CENTER);
 
         JButton plusButton = new JButton("+");
-        plusButton.setFont(new Font("SansSerif", Font.BOLD, 20));
+        plusButton.addActionListener(e -> {
+            List<String> airportNames = mainApp.getAllAirportNames();
+            System.out.println("SearchPanel: Fetched " + airportNames.size() + " airport names."); // Debugging line
+            if (airportNames.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "공항 정보를 불러올 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Use JComboBox with JOptionPane.showInputDialog for simpler selection
+            JComboBox<String> airportComboBox = new JComboBox<>(airportNames.toArray(new String[0]));
+            airportComboBox.setEditable(false); // Make it non-editable
+
+            int option = JOptionPane.showConfirmDialog(
+                    this,
+                    airportComboBox,
+                    "공항 선택",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
+            );
+
+            if (option == JOptionPane.OK_OPTION) {
+                String selectedAirport = (String) airportComboBox.getSelectedItem();
+                if (selectedAirport != null) {
+                    textField.setText(selectedAirport);
+                }
+            }
+        });
         row.add(plusButton, BorderLayout.EAST);
         return row;
     }

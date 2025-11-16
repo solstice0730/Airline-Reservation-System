@@ -11,4 +11,5 @@ public interface FlightDAO {
     List<Flight> findAll();
     void updateFlight(Flight flight);
     void deleteFlight(String flightId);
+    List<Flight> findFlightsByRoute(String routeId);
 }
