@@ -5,9 +5,9 @@ import java.util.List;
 
 public interface RouteDAO {
     void saveRoute(Route route);
-    Route findById(String routeId);
+    Route findByRouteId(String routeId);
+    List<Route> findRoutesByAirports(String departureAirportCode, String arrivalAirportCode);
     List<Route> findAll();
     void updateRoute(Route route);
     void deleteRoute(String routeId);
-    List<Route> findByOriginAndDestination(String originAirportCode, String destinationAirportCode);
 }

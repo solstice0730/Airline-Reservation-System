@@ -4,11 +4,11 @@ import com.team1.airline.entity.Reservation;
 import java.util.List;
 
 public interface ReservationDAO {
-    void saveReservation(Reservation reservation);
-    Reservation findById(String reservationId);
+    void addReservation(Reservation reservation);
+    Reservation findByReservationId(String reservationId);
+    List<Reservation> findReservationsByFlightId(String flightId);
+    List<Reservation> findReservationsByUserId(String userId);
     List<Reservation> findAll();
     void updateReservation(Reservation reservation);
     void deleteReservation(String reservationId);
-    List<Reservation> findByUserId(String userId);
-    List<Reservation> findByFlightId(String flightId);
 }

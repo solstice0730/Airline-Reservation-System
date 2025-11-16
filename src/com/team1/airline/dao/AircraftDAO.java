@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface AircraftDAO {
     void saveAircraft(Aircraft aircraft);
-    Aircraft findById(String aircraftId);
+    Aircraft findByAircraftId(String aircraftId);
     List<Aircraft> findAll();
     void updateAircraft(Aircraft aircraft);
     void deleteAircraft(String aircraftId);

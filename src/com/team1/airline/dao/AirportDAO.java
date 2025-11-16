@@ -5,9 +5,8 @@ import java.util.List;
 
 public interface AirportDAO {
     void saveAirport(Airport airport);
-    Airport findById(String airportCode);
+    Airport findByAirportCode(String airportCode);
     List<Airport> findAll();
     void updateAirport(Airport airport);
     void deleteAirport(String airportCode);
-    List<Airport> findByName(String name);
 }
