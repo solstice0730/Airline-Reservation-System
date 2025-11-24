@@ -49,8 +49,9 @@ public class ReservationManager implements ReservationManageable {
 
         // 2. 비즈니스 규칙: 항공편이 실존하며 '예약 가능' 상태인가?
         Flight flight = flightDAO.findByFlightId(flightId);
-        if (flight == null || !"Scheduled".equals(flight.getStatus())) {
-            System.out.println("ReservationManager Error: 항공편이 존재하지 않거나 예약 가능한 상태가 아닙니다.");
+        if (flight == null || !"Scheduled".equals(flight.getStatus()) && !"예약 가능".equals(flight.getStatus())) {
+            // Note: FlightManager에서 '예약 가능'으로 필터링하므로 여기서도 체크
+             System.out.println("ReservationManager Error: 항공편이 존재하지 않거나 예약 가능한 상태가 아닙니다.");
             return null;
         }
 
@@ -90,7 +91,14 @@ public class ReservationManager implements ReservationManageable {
         // 7. DAO를 통해 저장
         reservationDAO.addReservation(newReservation);
         
-        System.out.println("ReservationManager: 예약 성공!");
+        // [추가] 8. 마일리지 적립 로직 (결제 금액의 5%)
+        int mileageEarned = (int) (price * 0.05);
+        user.setMileage(user.getMileage() + mileageEarned);
+        userDAO.updateUser(user);
+        
+        System.out.println("ReservationManager: 예약 성공! (마일리지 " + mileageEarned + "점 적립됨)");
+        System.out.println("ReservationManager: 현재 총 마일리지: " + user.getMileage());
+
         return newReservation; // 성공
     }
 
@@ -137,7 +145,20 @@ public class ReservationManager implements ReservationManageable {
         // 5. 모든 규칙 통과 -> 상태 변경
         reservation.setStatus("Cancelled");
         
-        // 6. DAO를 통해 '수정'
+        // [추가] 6. 마일리지 회수 로직
+        User user = userDAO.findByUserId(userId);
+        if (user != null) {
+            int mileageToDeduct = (int) (reservation.getFinalPrice() * 0.05); // 적립했던 5% 계산
+            int currentMileage = user.getMileage();
+            
+            // 마일리지가 음수가 되지 않도록 처리
+            user.setMileage(Math.max(0, currentMileage - mileageToDeduct));
+            userDAO.updateUser(user);
+            System.out.println("ReservationManager: 예약 취소로 마일리지 " + mileageToDeduct + "점이 차감되었습니다.");
+            System.out.println("ReservationManager: 현재 총 마일리지: " + user.getMileage());
+        }
+        
+        // 7. DAO를 통해 '수정'
         reservationDAO.updateReservation(reservation);
         
         System.out.println("ReservationManager: 예약이 성공적으로 취소되었습니다.");
