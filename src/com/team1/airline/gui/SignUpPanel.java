@@ -166,11 +166,21 @@ public class SignUpPanel extends JPanel {
             return;
         }
 
-        // TODO: [개발팀] DB에 회원 정보 저장(INSERT) 로직 호출
+        String userId = idField.getText();
+        String password = new String(pwField.getPassword());
+        String userName = nameField.getText();
+        String passportNumber = passportField.getText();
+        String phone = phoneField.getText();
 
-        JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다.");
-        clearFields();
-        mainApp.showPanel("LOGIN");
+        boolean registered = mainApp.getUserController().register(userId, password, userName, passportNumber, phone);
+
+        if (registered) {
+            JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다. 로그인 해주세요.", "회원가입 성공", JOptionPane.INFORMATION_MESSAGE);
+            clearFields();
+            mainApp.showPanel("LOGIN");
+        } else {
+            JOptionPane.showMessageDialog(this, "회원가입에 실패했습니다. 이미 존재하는 아이디일 수 있습니다.", "회원가입 실패", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private void clearFields() {

@@ -145,7 +145,7 @@ public class FlightListPanel extends JPanel {
 
     private JScrollPane createCenterTable() {
         // 컬럼 정의: 마지막 "RouteId"는 화면에 보이지 않는 식별자용 컬럼
-        String[] columnNames = { "항공사", "출발 시간", "도착 시간", "소요 시간", "가격", "RouteId" };
+        String[] columnNames = { "항공사", "출발 시간", "도착 시간", "소요 시간", "가격", "RouteId", "FlightId" };
         
         model = new DefaultTableModel(new Object[][]{}, columnNames) {
             @Override
@@ -166,6 +166,9 @@ public class FlightListPanel extends JPanel {
         table.getColumnModel().getColumn(5).setMinWidth(0);
         table.getColumnModel().getColumn(5).setMaxWidth(0);
         table.getColumnModel().getColumn(5).setWidth(0);
+        table.getColumnModel().getColumn(6).setMinWidth(0);
+        table.getColumnModel().getColumn(6).setMaxWidth(0);
+        table.getColumnModel().getColumn(6).setWidth(0);
 
         // [중요] 정렬기(Sorter) 설정 - 텍스트가 아닌 값(숫자, 시간) 기준으로 정렬하기 위함
         sorter = new TableRowSorter<>(model);
@@ -253,14 +256,18 @@ public class FlightListPanel extends JPanel {
             return;
         }
 
-        // 테이블에서 데이터 추출
-        String depTime = getValueAt(selectedRow, 1);
-        String arrTime = getValueAt(selectedRow, 2);
-        String price   = getValueAt(selectedRow, 4);
-        String routeShort = getValueAt(selectedRow, 5); // 숨겨진 RouteId (ex: ICN-GMP)
+        // 테이블에서 데이터 추출 (View에서 보이는 값이 아닌 Model 인덱스 기준)
+        int modelRow = table.convertRowIndexToModel(selectedRow);
+        String depTime = (String) model.getValueAt(modelRow, 1);
+        String arrTime = (String) model.getValueAt(modelRow, 2);
+        String price   = (String) model.getValueAt(modelRow, 4);
+        String routeShort = (String) model.getValueAt(modelRow, 5); // 숨겨진 RouteId (ex: ICN-GMP)
+        String flightId = (String) model.getValueAt(modelRow, 6); // 숨겨진 FlightId
+
 
         // MainApp으로 데이터 전달
         mainApp.confirmFlight(
+                flightId,
                 routeShort,            // 짧은 경로 (상단 표시용)
                 currentRoute,          // 긴 경로 (하단 상세용)
                 currentDepartureDate,

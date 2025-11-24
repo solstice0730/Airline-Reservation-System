@@ -1,13 +1,19 @@
 package com.team1.airline.gui;
 
 import com.team1.airline.controller.FlightController;
+import com.team1.airline.controller.ReservationController;
+import com.team1.airline.controller.UserController;
 import com.team1.airline.dao.*;
 import com.team1.airline.dao.impl.*;
 import com.team1.airline.entity.Airport;
 import com.team1.airline.entity.Flight;
 import com.team1.airline.entity.Route;
 import com.team1.airline.service.FlightManageable;
+import com.team1.airline.service.ReservationManageable;
+import com.team1.airline.service.UserManageable;
 import com.team1.airline.service.impl.FlightManager;
+import com.team1.airline.service.impl.ReservationManager;
+import com.team1.airline.service.impl.UserManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,6 +23,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * MainApp
@@ -45,8 +52,13 @@ public class MainApp extends JFrame {
     private AircraftDAO aircraftDAO;
     private ReservationDAO reservationDAO;
     private AirportDAO airportDAO;
+    private UserDAO userDAO;
     private FlightManageable flightService;
+    private UserManageable userService;
+    private ReservationManageable reservationService;
     private FlightController flightController;
+    private UserController userController;
+    private ReservationController reservationController;
 
     public MainApp() {
         setTitle("항공권 예약 시스템 (프로토타입)");
@@ -67,14 +79,23 @@ public class MainApp extends JFrame {
         dataManager = DataManager.getInstance();
         dataManager.loadAllData(); 
 
+        // DAO
         flightDAO = new FlightDAOImpl();
         routeDAO = new RouteDAOImpl();
         aircraftDAO = new AircraftDAOImpl();
         reservationDAO = new ReservationDAOImpl();
         airportDAO = new AirportDAOImpl();
-        
+        userDAO = new UserDAOImpl();
+
+        // Services (Managers)
         flightService = new FlightManager(flightDAO, routeDAO, aircraftDAO, reservationDAO);
+        userService = new UserManager(userDAO);
+        reservationService = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, flightService);
+
+        // Controllers
         flightController = new FlightController(flightService);
+        userController = new UserController(userService);
+        reservationController = new ReservationController(reservationService, userController);
     }
 
     private void initUI() {
@@ -101,6 +122,15 @@ public class MainApp extends JFrame {
 
         add(cardPanel);
     }
+    
+    // --- Public Getters for Controllers ---
+    public UserController getUserController() {
+        return userController;
+    }
+    
+    public ReservationController getReservationController() {
+        return reservationController;
+    }
 
     /**
      * 화면 전환 메서드
@@ -114,7 +144,10 @@ public class MainApp extends JFrame {
         switch (panelName) {
             case "LOGIN": current = loginPanel; break;
             case "SIGNUP": current = signUpPanel; break;
-            case "MAIN": current = mainMenuPanel; break;
+            case "MAIN":
+                mainMenuPanel.updateUserInfo();
+                current = mainMenuPanel;
+                break;
             case "SEARCH": current = searchPanel; break;
             case "LIST": current = flightListPanel; break;
             case "CONFIRM": current = confirmPanel; break;
@@ -175,8 +208,8 @@ public class MainApp extends JFrame {
         List<Flight> flights = flightController.searchFlights(departureCode, arrivalCode, departureDate);
 
         // 4. 검색 결과를 테이블 데이터(Object[][])로 변환
-        // 컬럼: 항공사, 출발시간, 도착시간, 소요시간, 가격, [RouteId(숨김)]
-        Object[][] flightData = new Object[flights.size()][6];
+        // 컬럼: 항공사, 출발시간, 도착시간, 소요시간, 가격, [RouteId(숨김)], [FlightId(숨김)]
+        Object[][] flightData = new Object[flights.size()][7];
 
         for (int i = 0; i < flights.size(); i++) {
             Flight flight = flights.get(i);
@@ -188,8 +221,8 @@ public class MainApp extends JFrame {
             String duration = (route != null ? route.getDuration() + "분" : "N/A");
             String price = (route != null ? String.format(Locale.KOREA, "%,.0f원", route.getPrice()) : "N/A");
 
-            // 마지막 인덱스에 RouteId ("ICN-GMP") 저장
-            flightData[i] = new Object[] { airline, depTime, arrTime, duration, price, flight.getRouteId() };
+            // 마지막 인덱스에 RouteId와 FlightId 저장
+            flightData[i] = new Object[] { airline, depTime, arrTime, duration, price, flight.getRouteId(), flight.getFlightId() };
         }
 
         // 5. FlightListPanel UI 업데이트 및 화면 전환
@@ -202,8 +235,8 @@ public class MainApp extends JFrame {
     /**
      * 항공권 선택 후 예약 확인창(ConfirmPanel)으로 이동
      */
-    public void confirmFlight(String routeShort, String routeLong, String departureDate, String returnDate, String time, String person, String price) {
-        confirmPanel.setFlightDetails(routeShort, routeLong, departureDate, returnDate, time, person, price);
+    public void confirmFlight(String flightId, String routeShort, String routeLong, String departureDate, String returnDate, String time, String person, String price) {
+        confirmPanel.setFlightDetails(flightId, routeShort, routeLong, departureDate, returnDate, time, person, price);
         showPanel("CONFIRM");
     }
 }

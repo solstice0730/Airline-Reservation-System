@@ -1,5 +1,8 @@
 package com.team1.airline.gui;
 
+import com.team1.airline.entity.Reservation;
+import com.team1.airline.entity.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -19,7 +22,10 @@ public class ConfirmPanel extends JPanel {
     private JLabel personLabel;
     
     private JLabel confirmRouteLabel;
+    private JLabel userLabel;
     private JLabel confirmPriceLabel;
+
+    private String flightId;
 
     public ConfirmPanel(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -110,7 +116,7 @@ public class ConfirmPanel extends JPanel {
         confirmRouteLabel = new JLabel("선택한 항공권: ");
         confirmRouteLabel.setFont(INFO_FONT);
         
-        JLabel userLabel = new JLabel("승객 성명: 홍길동"); // 로그인 세션 연동 필요
+        userLabel = new JLabel("승객 성명: ");
         userLabel.setFont(INFO_FONT);
 
         confirmPriceLabel = new JLabel("₩0");
@@ -137,9 +143,24 @@ public class ConfirmPanel extends JPanel {
         payButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 50));
         
         payButton.addActionListener(e -> {
-            // TODO: [개발팀] 결제 처리 로직 (DB 저장 등)
-            JOptionPane.showMessageDialog(mainApp, "예약이 완료되었습니다.");
-            mainApp.showPanel("SEARCH");
+            User currentUser = mainApp.getUserController().getCurrentUser();
+            if (currentUser == null) {
+                JOptionPane.showMessageDialog(mainApp, "로그인이 필요합니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                mainApp.showPanel("LOGIN");
+                return;
+            }
+
+            // A1, A2... 식으로 좌석 배정. 인원수만큼 반복해야 하지만, UI가 인원수만 받아 간단히 첫번째 좌석만 배정
+            String seatNumber = "A1"; 
+
+            Reservation reservation = mainApp.getReservationController().makeReservation(this.flightId, seatNumber);
+
+            if (reservation != null) {
+                JOptionPane.showMessageDialog(mainApp, "예약이 완료되었습니다. 예약번호: " + reservation.getReservationId(), "예약 성공", JOptionPane.INFORMATION_MESSAGE);
+                mainApp.showPanel("MAIN");
+            } else {
+                JOptionPane.showMessageDialog(mainApp, "예약에 실패했습니다. (좌석 부족 또는 시스템 오류)", "예약 실패", JOptionPane.ERROR_MESSAGE);
+            }
         });
         
         panel.add(payButton, BorderLayout.CENTER);
@@ -157,13 +178,19 @@ public class ConfirmPanel extends JPanel {
     /**
      * MainApp에서 호출하여 화면에 데이터를 세팅하는 메서드
      */
-    public void setFlightDetails(String routeShort, String routeLong, String depDate, String retDate, String time, String person, String price) {
+    public void setFlightDetails(String flightId, String routeShort, String routeLong, String depDate, String retDate, String time, String person, String price) {
+        this.flightId = flightId;
         String dateRange = depDate + (retDate != null && !retDate.isEmpty() ? " ~ " + retDate : "");
+        
+        User currentUser = mainApp.getUserController().getCurrentUser();
         
         routeArea.setText(routeShort + "\n" + dateRange);
         timeLabel.setText(time);
         personLabel.setText(person);
         confirmRouteLabel.setText("선택한 항공권: " + routeLong);
+        if (currentUser != null) {
+            userLabel.setText("승객 성명: " + currentUser.getUserName());
+        }
         confirmPriceLabel.setText(price);
     }
 }

@@ -107,9 +107,22 @@ public class LoginPanel extends JPanel {
         loginButton.setBorder(null);
 
         loginButton.addActionListener(e -> {
-            // TODO: [개발팀] 실제 로그인 검증 로직 구현 필요
-            // 현재는 검증 없이 메인 화면으로 이동
-            mainApp.showPanel("MAIN");
+            String userId = idField.getText();
+            String password = new String(pwField.getPassword());
+
+            if (userId.isEmpty() || password.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 모두 입력해주세요.", "로그인 오류", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            boolean loggedIn = mainApp.getUserController().login(userId, password);
+
+            if (loggedIn) {
+                mainApp.showPanel("MAIN");
+            } else {
+                JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
+                pwField.setText(""); // 비밀번호 필드 초기화
+            }
         });
 
         bottomPanel.add(loginButton);
