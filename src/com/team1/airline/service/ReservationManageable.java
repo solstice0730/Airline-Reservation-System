@@ -1,6 +1,7 @@
 package com.team1.airline.service;
 
 import com.team1.airline.entity.Reservation;
+import com.team1.airline.gui.PaymentHistoryPanel.PaymentRow;
 import java.util.List;
 
 public interface ReservationManageable {
@@ -20,6 +21,13 @@ public interface ReservationManageable {
      * @return 해당 사용자의 모든 예약 리스트
      */
     List<Reservation> getMyReservations(String userId);
+
+    /**
+     * R (Read) - 내 예약 상세 정보 조회 (GUI 표시용)
+     * @param userId 조회할 사용자 ID
+     * @return 해당 사용자의 모든 예약 상세 정보 리스트
+     */
+    List<PaymentRow> getMyReservationDetails(String userId);
 
     /**
      * U (Update) / D (Delete) - 예약 취소 비즈니스 로직

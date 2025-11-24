@@ -79,6 +79,15 @@ public class ReservationController {
         
         return reservations;
     }
+
+    public List<com.team1.airline.gui.PaymentHistoryPanel.PaymentRow> getMyReservationDetails() {
+        if (!userController.isLoggedIn()) {
+            System.out.println("[ReservationController] 로그인이 필요합니다.");
+            return List.of();
+        }
+        String userId = userController.getCurrentUserId();
+        return reservationService.getMyReservationDetails(userId);
+    }
     
     /**
      * 예약 취소

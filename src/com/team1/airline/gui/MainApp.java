@@ -90,7 +90,7 @@ public class MainApp extends JFrame {
         // Services (Managers)
         flightService = new FlightManager(flightDAO, routeDAO, aircraftDAO, reservationDAO);
         userService = new UserManager(userDAO);
-        reservationService = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, flightService);
+        reservationService = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, airportDAO, flightService);
 
         // Controllers
         flightController = new FlightController(flightService);
@@ -151,7 +151,10 @@ public class MainApp extends JFrame {
             case "SEARCH": current = searchPanel; break;
             case "LIST": current = flightListPanel; break;
             case "CONFIRM": current = confirmPanel; break;
-            case "PAYMENT_HISTORY": current = paymentHistoryPanel; break;
+            case "PAYMENT_HISTORY":
+                paymentHistoryPanel.loadPaymentHistory();
+                current = paymentHistoryPanel;
+                break;
         }
 
         if (current != null) {

@@ -17,6 +17,7 @@ public class ReservationManager implements ReservationManageable {
     private UserDAO userDAO;
     private FlightDAO flightDAO;
     private RouteDAO routeDAO;
+    private AirportDAO airportDAO;
     
     // FlightManager의 '좌석 확인' 로직을 재사용하기 위해 주입받음
     private FlightManageable flightManager; 
@@ -24,11 +25,12 @@ public class ReservationManager implements ReservationManageable {
     /**
      * 생성자 (Constructor) - 부품들을 주입받습니다.
      */
-    public ReservationManager(ReservationDAO reservationDAO, UserDAO userDAO, FlightDAO flightDAO, RouteDAO routeDAO, FlightManageable flightManager) {
+    public ReservationManager(ReservationDAO reservationDAO, UserDAO userDAO, FlightDAO flightDAO, RouteDAO routeDAO, AirportDAO airportDAO, FlightManageable flightManager) {
         this.reservationDAO = reservationDAO;
         this.userDAO = userDAO;
         this.flightDAO = flightDAO;
         this.routeDAO = routeDAO;
+        this.airportDAO = airportDAO;
         this.flightManager = flightManager;
     }
 
@@ -109,6 +111,39 @@ public class ReservationManager implements ReservationManageable {
     public List<Reservation> getMyReservations(String userId) {
         // DAO에게 단순 전달
         return reservationDAO.findReservationsByUserId(userId);
+    }
+
+    @Override
+    public List<com.team1.airline.gui.PaymentHistoryPanel.PaymentRow> getMyReservationDetails(String userId) {
+        List<Reservation> reservations = getMyReservations(userId);
+        List<com.team1.airline.gui.PaymentHistoryPanel.PaymentRow> details = new java.util.ArrayList<>();
+
+        for (Reservation r : reservations) {
+            // "Confirmed" 상태인 예약만 목록에 포함
+            if (!"Confirmed".equals(r.getStatus())) {
+                continue;
+            }
+            
+            Flight f = flightDAO.findByFlightId(r.getFlightId());
+            if (f == null) continue;
+
+            Route route = routeDAO.findByRouteId(f.getRouteId());
+            if (route == null) continue;
+
+            com.team1.airline.entity.Airport dep = airportDAO.findByAirportCode(route.getDepartureAirportCode());
+            com.team1.airline.entity.Airport arr = airportDAO.findByAirportCode(route.getArrivalAirportCode());
+            if (dep == null || arr == null) continue;
+
+            String airline = f.getFlightId().substring(0, 2);
+            String flightNo = f.getFlightId();
+            String routeStr = dep.getAirportName() + " -> " + arr.getAirportName();
+            String timeInfo = f.getDepartureTime().toLocalTime().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) + " ~ " + f.getArrivalTime().toLocalTime().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+            String seatInfo = r.getSeatNumber();
+            String priceText = String.format("₩%,.0f", r.getFinalPrice());
+
+            details.add(new com.team1.airline.gui.PaymentHistoryPanel.PaymentRow(r.getReservationId(), airline, flightNo, routeStr, timeInfo, seatInfo, priceText));
+        }
+        return details;
     }
 
     /**
