@@ -80,8 +80,18 @@ public class DataManager {
             while ((line = br.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
                 String[] values = line.split("\\s+");
-                if (values.length == 5) {
-                    loadedUsers.add(new User(values[0], values[1], values[2], values[3], values[4]));
+                
+                // [수정] 5개(기존) 또는 6개(마일리지 포함) 컬럼 처리
+                if (values.length >= 5) {
+                    int mileage = 0;
+                    if (values.length >= 6) {
+                        try {
+                            mileage = Integer.parseInt(values[5]);
+                        } catch (NumberFormatException e) {
+                            mileage = 0;
+                        }
+                    }
+                    loadedUsers.add(new User(values[0], values[1], values[2], values[3], values[4], mileage));
                 }
             }
         } catch (IOException e) {
@@ -208,8 +218,15 @@ public class DataManager {
 
     // --- Save methods ---
     private void saveUsers() {
+        // [수정] 마일리지 정보 포함하여 저장
         List<String> lines = users.stream()
-                .map(user -> String.join(" ", user.getUserId(), user.getPassword(), user.getUserName(), user.getPassportNumber(), user.getPhone()))
+                .map(user -> String.join(" ", 
+                        user.getUserId(), 
+                        user.getPassword(), 
+                        user.getUserName(), 
+                        user.getPassportNumber(), 
+                        user.getPhone(),
+                        String.valueOf(user.getMileage()))) 
                 .collect(Collectors.toList());
         try {
             Files.write(Paths.get(USER_FILE), lines, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

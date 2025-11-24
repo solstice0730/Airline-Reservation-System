@@ -34,7 +34,8 @@ public class UserController {
      */
     public boolean register(String userId, String password, String userName, 
                           String passportNumber, String phone) {
-        User newUser = new User(userId, password, userName, passportNumber, phone);
+        // [수정] 회원가입 시 초기 마일리지 0으로 설정
+        User newUser = new User(userId, password, userName, passportNumber, phone, 0);
         boolean success = userService.addUser(newUser);
         
         if (success) {
@@ -58,6 +59,8 @@ public class UserController {
         if (user != null) {
             this.currentUser = user;
             System.out.println("[UserController] 로그인 성공: " + userId);
+            // 로그인 시 마일리지 정보 출력 (확인용)
+            System.out.println("[UserController] 현재 마일리지: " + user.getMileage());
             return true;
         } else {
             System.out.println("[UserController] 로그인 실패: " + userId);
