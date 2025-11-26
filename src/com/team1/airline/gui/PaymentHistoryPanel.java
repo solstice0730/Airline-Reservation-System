@@ -8,28 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 결제 내역 확인 패널
+ * [결제 내역 패널]
+ * 사용자의 예약 내역을 리스트로 보여주고, 취소 기능을 제공합니다.
  */
 public class PaymentHistoryPanel extends JPanel {
 
     private final MainApp mainApp;
     private final Color PRIMARY_BLUE = new Color(0, 122, 255);
 
-    // UI 컴포넌트
     private JLabel countLabel;
     private JTable table;
     private DefaultTableModel tableModel;
     
-    // 우측 상세 정보 라벨
     private JLabel eastFlightNoLabel;
     private JLabel eastRouteTimeLabel;
     private JLabel eastSeatLabel;
     private JLabel eastPriceLabel;
 
-    // 데이터
     private List<PaymentRow> paymentRows = new ArrayList<>();
 
-    // DTO 클래스
     public static class PaymentRow {
         private final String reservationNo, airline, flightNo, route, timeInfo, seatInfo, priceText;
         public PaymentRow(String rNo, String al, String fNo, String rt, String ti, String si, String pt) {
@@ -102,7 +99,7 @@ public class PaymentHistoryPanel extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // [수정] 컬럼 순서 변경: 좌석번호를 맨 뒤로 이동
+        // [예약번호, 항공편번호, 경로, 좌석번호]
         tableModel = new DefaultTableModel(new Object[] { "예약번호", "항공편번호", "경로", "좌석번호" }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -140,7 +137,6 @@ public class PaymentHistoryPanel extends JPanel {
         panel.add(eastPriceLabel);
         panel.add(Box.createVerticalStrut(15));
 
-        // 예약 취소 버튼
         JButton cancelButton = new JButton("예약 취소");
         cancelButton.setForeground(Color.WHITE);
         cancelButton.setBackground(PRIMARY_BLUE);
@@ -167,7 +163,6 @@ public class PaymentHistoryPanel extends JPanel {
                     tableModel.removeRow(selectedRow);
                     countLabel.setText(paymentRows.size() + "개의 결제내역이 있습니다.");
                     
-                    // 상세 정보 초기화
                     eastFlightNoLabel.setText("항공편: -");
                     eastRouteTimeLabel.setText("-");
                     eastSeatLabel.setText("-");
@@ -219,7 +214,6 @@ public class PaymentHistoryPanel extends JPanel {
         eastPriceLabel.setText(pr.getPriceText());
     }
 
-    // [수정] 데이터 삽입 순서 변경 (좌석번호를 맨 뒤로)
     public void setPaymentRows(List<PaymentRow> rows) {
         this.paymentRows = (rows != null) ? rows : new ArrayList<>();
         tableModel.setRowCount(0);
@@ -228,7 +222,7 @@ public class PaymentHistoryPanel extends JPanel {
                 row.getReservationNo(), 
                 row.getFlightNo(), 
                 row.getRoute(),
-                row.getSeatInfo() // [이동됨] 좌석번호가 맨 마지막 컬럼으로 이동
+                row.getSeatInfo()
             });
         }
         countLabel.setText(this.paymentRows.size() + "개의 결제내역이 있습니다.");

@@ -11,13 +11,16 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.event.ActionListener;
 
+/**
+ * [마이페이지 패널]
+ * 개인정보 조회, 수정 및 회원탈퇴 기능 제공.
+ */
 public class MyPagePanel extends JPanel {
 
 	private final MainApp mainApp;
 	private final UserDAO userDAO;
 	private User currentUser;
 
-	// 스타일 상수
 	private final Color PRIMARY_BLUE = new Color(0, 122, 255);
 	private final Color LIGHT_GRAY_BG = new Color(245, 245, 245);
 	private final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 22);
@@ -25,12 +28,11 @@ public class MyPagePanel extends JPanel {
 	private final Font FONT_LABEL = new Font("SansSerif", Font.BOLD, 14);
 	private final Font FONT_VALUE = new Font("SansSerif", Font.PLAIN, 14);
 
-	// 값을 표시할 라벨들
 	private JLabel nameIdLabel;
 	private JLabel passportValueLabel;
 	private JLabel phoneValueLabel;
 	private JLabel pwMaskLabel;
-	private JLabel mileageLabel; // [추가] 마일리지 표시 라벨
+	private JLabel mileageLabel; 
 
 	public MyPagePanel(MainApp mainApp) {
 		this.mainApp = mainApp;
@@ -80,24 +82,15 @@ public class MyPagePanel extends JPanel {
 		gbc.insets = new Insets(10, 10, 10, 10);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-		// 1. 프로필 아이콘
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridheight = 4;
-		gbc.anchor = GridBagConstraints.NORTH;
-		gbc.weightx = 0;
+		gbc.gridx = 0; gbc.gridy = 0; gbc.gridheight = 4;
+		gbc.anchor = GridBagConstraints.NORTH; gbc.weightx = 0;
 		cardPanel.add(createProfileIcon(), gbc);
 
-		// 2. 이름 및 아이디
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.gridheight = 1;
-		gbc.weightx = 1.0;
+		gbc.gridx = 1; gbc.gridy = 0; gbc.gridheight = 1; gbc.weightx = 1.0;
 		nameIdLabel = new JLabel("사용자 정보 없음");
 		nameIdLabel.setFont(FONT_NAME);
 		cardPanel.add(nameIdLabel, gbc);
 
-		// 3. 정보 행들
 		gbc.gridy = 1;
 		pwMaskLabel = new JLabel("****");
 		pwMaskLabel.setFont(FONT_VALUE);
@@ -113,23 +106,16 @@ public class MyPagePanel extends JPanel {
 		phoneValueLabel.setFont(FONT_VALUE);
 		cardPanel.add(createRow("전화번호", phoneValueLabel, e -> openChangePhoneDialog()), gbc);
 
-		// [추가] 3-4. 보유 마일리지 행 추가
 		gbc.gridy = 4;
 		mileageLabel = new JLabel("0 P");
 		mileageLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-		mileageLabel.setForeground(new Color(0, 100, 0)); // 초록색으로 강조
+		mileageLabel.setForeground(new Color(0, 100, 0)); 
 
-		// 마일리지는 변경 버튼 없이 값만 보여주는 행으로 생성
 		JPanel mileageRow = createRow("마일리지", mileageLabel, null);
 		cardPanel.add(mileageRow, gbc);
 
-		// 4. 하단 버튼들
-		gbc.gridx = 0;
-		gbc.gridy = 5;
-		gbc.gridwidth = 2;
-		gbc.gridheight = 1;
-		gbc.weighty = 1.0;
-		gbc.anchor = GridBagConstraints.SOUTH;
+		gbc.gridx = 0; gbc.gridy = 5; gbc.gridwidth = 2; gbc.gridheight = 1;
+		gbc.weighty = 1.0; gbc.anchor = GridBagConstraints.SOUTH;
 		gbc.insets = new Insets(30, 10, 5, 10);
 
 		JButton saveButton = new JButton("변경사항 저장");
@@ -141,8 +127,7 @@ public class MyPagePanel extends JPanel {
 		saveButton.addActionListener(e -> saveChangesToDB());
 		cardPanel.add(saveButton, gbc);
 
-		gbc.gridy = 6;
-		gbc.insets = new Insets(5, 10, 10, 10);
+		gbc.gridy = 6; gbc.insets = new Insets(5, 10, 10, 10);
 		JButton deleteButton = new JButton("회원탈퇴");
 		deleteButton.setBackground(Color.GRAY);
 		deleteButton.setForeground(Color.WHITE);
@@ -209,20 +194,14 @@ public class MyPagePanel extends JPanel {
 		return iconPanel;
 	}
 
-	// --- 기능 로직 ---
-
-	// 정보 갱신 메서드
     public void setUserInfo(User user) {
         this.currentUser = user;
         if (user != null) {
             nameIdLabel.setText(user.getUserName() + " ( " + user.getUserId() + " )");
             passportValueLabel.setText(user.getPassportNumber());
             phoneValueLabel.setText(user.getPhone());
-            
-            // 마일리지 갱신
             mileageLabel.setText(String.format("%,d P", user.getMileage()));
         } else {
-            // 로그인 정보가 없을 때 초기화
             nameIdLabel.setText("사용자 정보 없음");
             passportValueLabel.setText("-");
             phoneValueLabel.setText("-");
@@ -230,17 +209,13 @@ public class MyPagePanel extends JPanel {
         }
     }
 
-	// --- 다이얼로그 메서드 (유저 null 체크 추가) ---
-
 	private void openChangePasswordDialog() {
 		if (currentUser == null) {
 			JOptionPane.showMessageDialog(this, "사용자 정보가 로드되지 않았습니다.");
 			return;
 		}
-
 		JPasswordField pf = new JPasswordField();
 		int result = JOptionPane.showConfirmDialog(this, pf, "새로운 비밀번호를 입력하세요", JOptionPane.OK_CANCEL_OPTION);
-
 		if (result == JOptionPane.OK_OPTION) {
 			String newPass = new String(pf.getPassword());
 			if (!newPass.isBlank()) {
@@ -255,7 +230,6 @@ public class MyPagePanel extends JPanel {
 			JOptionPane.showMessageDialog(this, "사용자 정보가 로드되지 않았습니다.");
 			return;
 		}
-
 		String newPassport = JOptionPane.showInputDialog(this, "새로운 여권번호를 입력하세요:", currentUser.getPassportNumber());
 		if (newPassport != null && !newPassport.isBlank()) {
 			currentUser.setPassportNumber(newPassport);
@@ -268,7 +242,6 @@ public class MyPagePanel extends JPanel {
 			JOptionPane.showMessageDialog(this, "사용자 정보가 로드되지 않았습니다.");
 			return;
 		}
-
 		String newPhone = JOptionPane.showInputDialog(this, "새로운 전화번호를 입력하세요:", currentUser.getPhone());
 		if (newPhone != null && !newPhone.isBlank()) {
 			currentUser.setPhone(newPhone);
@@ -277,15 +250,13 @@ public class MyPagePanel extends JPanel {
 	}
 
 	private void saveChangesToDB() {
-		if (currentUser == null)
-			return;
+		if (currentUser == null) return;
 		userDAO.updateUser(currentUser);
 		JOptionPane.showMessageDialog(this, "모든 변경사항이 저장되었습니다.");
 	}
 
 	private void deleteAccount() {
-		if (currentUser == null)
-			return;
+		if (currentUser == null) return;
 		int confirm = JOptionPane.showConfirmDialog(this, "정말로 탈퇴하시겠습니까?\n탈퇴 시 모든 정보가 삭제됩니다.", "회원 탈퇴",
 				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 

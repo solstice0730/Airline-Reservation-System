@@ -7,7 +7,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * 로그인 화면
+ * [로그인 패널]
+ * 사용자 ID/PW 입력 및 인증 처리
  */
 public class LoginPanel extends JPanel {
 
@@ -27,9 +28,7 @@ public class LoginPanel extends JPanel {
         JPanel centerContainer = new JPanel(new GridBagLayout());
         centerContainer.setBackground(Color.WHITE);
         
-        JPanel formPanel = createFormPanel();
-        
-        centerContainer.add(formPanel);
+        centerContainer.add(createFormPanel());
         add(centerContainer, BorderLayout.CENTER);
     }
 
@@ -39,6 +38,7 @@ public class LoginPanel extends JPanel {
         formPanel.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
         formPanel.setPreferredSize(new Dimension(400, 450));
 
+        // 상단 헤더
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(PRIMARY_BLUE);
         headerPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
@@ -50,6 +50,7 @@ public class LoginPanel extends JPanel {
         
         formPanel.add(headerPanel, BorderLayout.NORTH);
 
+        // 입력 필드 영역
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(Color.WHITE);
@@ -69,6 +70,7 @@ public class LoginPanel extends JPanel {
 
         contentPanel.add(Box.createVerticalStrut(20));
 
+        // 회원가입 링크
         JLabel signUpLink = new JLabel("계정이 없으신가요? 가입하기");
         signUpLink.setFont(new Font("SansSerif", Font.PLAIN, 13));
         signUpLink.setForeground(Color.DARK_GRAY);
@@ -85,6 +87,7 @@ public class LoginPanel extends JPanel {
 
         formPanel.add(contentPanel, BorderLayout.CENTER);
 
+        // 로그인 버튼
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(0, 0, 30, 0));
@@ -97,25 +100,30 @@ public class LoginPanel extends JPanel {
         loginButton.setFocusPainted(false);
         loginButton.setBorder(null);
 
-        // [수정] 로그인 로직: UserController 사용
-        loginButton.addActionListener(e -> {
-            String userId = idField.getText();
-            String password = new String(pwField.getPassword());
-
-            boolean isLoginSuccess = mainApp.getUserController().login(userId, password);
-
-            if (isLoginSuccess) {
-                JOptionPane.showMessageDialog(this, userId + "님 환영합니다!");
-                mainApp.showPanel("MAIN"); 
-            } else {
-                JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호를 확인해주세요.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+        loginButton.addActionListener(e -> performLogin());
 
         bottomPanel.add(loginButton);
         formPanel.add(bottomPanel, BorderLayout.SOUTH);
         
         return formPanel;
+    }
+
+    private void performLogin() {
+        String userId = idField.getText();
+        String password = new String(pwField.getPassword());
+
+        // MainApp의 UserController를 통해 로그인 시도 (User 세션 생성)
+        boolean isLoginSuccess = mainApp.getUserController().login(userId, password);
+
+        if (isLoginSuccess) {
+            // 입력창 초기화
+            idField.setText("");
+            pwField.setText("");
+            JOptionPane.showMessageDialog(this, userId + "님 환영합니다!");
+            mainApp.showPanel("MAIN"); 
+        } else {
+            JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호를 확인해주세요.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private JLabel createLabel(String text) {
@@ -142,4 +150,4 @@ public class LoginPanel extends JPanel {
         field.setAlignmentX(Component.LEFT_ALIGNMENT);
         return field;
     }
-} 
+}

@@ -10,20 +10,23 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * [좌석 선택 다이얼로그]
+ * 항공기 정보를 받아 비즈니스/이코노미 좌석을 시각적으로 표시하고 선택받습니다.
+ */
 public class SeatSelectionDialog extends JDialog {
 
-    private Set<String> selectedSeats = new HashSet<>(); // 선택된 좌석 목록
+    private Set<String> selectedSeats = new HashSet<>();
     private final Set<String> occupiedSeats;
     
-    private final int neededBiz;  // 선택해야 할 비즈니스 석 수
-    private final int neededEco;  // 선택해야 할 이코노미 석 수
+    private final int neededBiz;
+    private final int neededEco;
     private int currentBizCount = 0;
     private int currentEcoCount = 0;
 
     private final JPanel seatPanel;
-    private JLabel statusLabel; // 현재 선택 현황 표시
+    private JLabel statusLabel;
 
-    // 스타일 상수
     private final Color COLOR_BUSINESS = new Color(0, 51, 102); 
     private final Color COLOR_ECONOMY = new Color(100, 149, 237);
     private final Color COLOR_TAKEN = new Color(200, 200, 200);   
@@ -39,7 +42,6 @@ public class SeatSelectionDialog extends JDialog {
         setSize(500, 800);
         setLocationRelativeTo(owner);
 
-        // 1. 상단 안내 (Legend + Status)
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(createLegendPanel(), BorderLayout.NORTH);
         
@@ -51,7 +53,6 @@ public class SeatSelectionDialog extends JDialog {
         
         add(topPanel, BorderLayout.NORTH);
 
-        // 2. 좌석 배치 스크롤 패널
         seatPanel = new JPanel(new GridBagLayout());
         seatPanel.setBackground(Color.WHITE);
         generateSeats(aircraft);
@@ -60,7 +61,6 @@ public class SeatSelectionDialog extends JDialog {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         add(scrollPane, BorderLayout.CENTER);
 
-        // 3. 하단 완료 버튼
         JButton confirmBtn = new JButton("선택 완료");
         confirmBtn.setBackground(new Color(0, 122, 255));
         confirmBtn.setForeground(Color.WHITE);
@@ -112,7 +112,7 @@ public class SeatSelectionDialog extends JDialog {
 
         int currentRow = 1;
 
-        // --- 비즈니스석 ---
+        // 비즈니스석 (2-2 배열)
         int bizRows = (int) Math.ceil((double) aircraft.getBusiness() / 4);
         addHeader(gbc, "BUSINESS CLASS", currentRow++);
         char[] bizCols = {'A', 'C', 'D', 'F'}; 
@@ -129,7 +129,7 @@ public class SeatSelectionDialog extends JDialog {
 
         currentRow++; // 간격
         
-        // --- 이코노미석 ---
+        // 이코노미석 (3-3 배열)
         int ecoRows = (int) Math.ceil((double) aircraft.getEconomy() / 6);
         addHeader(gbc, "ECONOMY CLASS", currentRow++);
         char[] ecoCols = {'A', 'B', 'C', 'D', 'E', 'F'};
@@ -181,7 +181,7 @@ public class SeatSelectionDialog extends JDialog {
                             selectedSeats.add(seatNum);
                             btn.setBackground(COLOR_SELECTED);
                         } else {
-                            btn.setSelected(false); // 선택 취소
+                            btn.setSelected(false); 
                             JOptionPane.showMessageDialog(this, "비즈니스석은 " + neededBiz + "명만 선택 가능합니다.");
                         }
                     } else { // Economy
@@ -209,13 +209,10 @@ public class SeatSelectionDialog extends JDialog {
         seatPanel.add(btn, gbc);
     }
 
-    /** * 선택된 좌석들을 콤마(,)로 구분된 문자열로 반환 
-     * 예: "1A, 1C" 
-     */
     public String getSelectedSeats() {
         if (currentBizCount == neededBiz && currentEcoCount == neededEco) {
             return selectedSeats.stream().sorted().collect(Collectors.joining(", "));
         }
-        return null; // 선택 완료되지 않음
+        return null; 
     }
 }

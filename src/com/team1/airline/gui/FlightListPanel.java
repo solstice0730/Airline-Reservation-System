@@ -7,12 +7,14 @@ import javax.swing.table.TableRowSorter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import java.awt.*;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * [검색 결과 리스트 패널]
+ * 검색된 항공편 목록을 테이블로 보여주고, 정렬 및 선택 기능을 제공.
+ */
 public class FlightListPanel extends JPanel {
 
     private final MainApp mainApp;
@@ -134,6 +136,7 @@ public class FlightListPanel extends JPanel {
         table.getTableHeader().setReorderingAllowed(false);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        // 숨김 컬럼 (RouteId, TotalPrice)
         table.getColumnModel().getColumn(5).setMinWidth(0);
         table.getColumnModel().getColumn(5).setMaxWidth(0);
         table.getColumnModel().getColumn(5).setWidth(0);
@@ -143,6 +146,7 @@ public class FlightListPanel extends JPanel {
         table.getColumnModel().getColumn(6).setWidth(0);
 
         sorter = new TableRowSorter<>(model);
+        // 정렬기 설정: 가격(숫자), 시간(문자열), 소요시간(숫자 파싱)
         sorter.setComparator(4, (o1, o2) -> Integer.compare(parsePrice(o1), parsePrice(o2))); 
         sorter.setComparator(1, (o1, o2) -> o1.toString().compareTo(o2.toString())); 
         sorter.setComparator(2, (o1, o2) -> o1.toString().compareTo(o2.toString())); 
@@ -200,8 +204,8 @@ public class FlightListPanel extends JPanel {
                 String flightCode = getValueAt(row, 0);
                 String depTime = getValueAt(row, 1);
                 String arrTime = getValueAt(row, 2);
-                String price   = getValueAt(row, 4);
-                String totalPrice = getValueAt(row, 6);
+                // String price   = getValueAt(row, 4); // 1인 정가
+                String totalPrice = getValueAt(row, 6); // 총액
 
                 eastAirlineLabel.setText("항공편: " + flightCode);
                 eastRouteTimeLabel.setText("<html>" + currentRoute + "<br>" + depTime + " ~ " + arrTime + "</html>");
@@ -229,6 +233,7 @@ public class FlightListPanel extends JPanel {
             realRetDate = "";
         }
 
+        // 좌석 선택 다이얼로그 호출
         mainApp.openSeatSelection(
         		flightId,
                 routeShort,            
@@ -256,7 +261,6 @@ public class FlightListPanel extends JPanel {
                 else if (src == durationCheckBox) applySort(3); 
                 else if (src == depTimeCheckBox)  applySort(1); 
                 else if (src == arrTimeCheckBox)  applySort(2); 
-                
             } else {
                 if (!priceCheckBox.isSelected() && !durationCheckBox.isSelected() &&
                     !depTimeCheckBox.isSelected() && !arrTimeCheckBox.isSelected()) {
@@ -281,13 +285,10 @@ public class FlightListPanel extends JPanel {
     public void updateSearchCriteria(String depName, String arrName, String depDate, String retDate, String seat) {
         currentRoute = depName + " -> " + arrName;
         westRouteLabel.setText("<html>" + currentRoute + "</html>");
-
         currentDepartureDate = formatInfoText(depDate, "선택 안함");
         westDepDateLabel.setText("가는 날: " + currentDepartureDate);
-
         currentReturnDate = formatInfoText(retDate, "선택 안함");
         westRetDateLabel.setText("오는 날: " + currentReturnDate);
-
         currentSeatSummary = (seat != null && !seat.isBlank()) ? seat : "좌석 선택 안함";
         westSeatLabel.setText(currentSeatSummary);
     }
@@ -295,12 +296,11 @@ public class FlightListPanel extends JPanel {
     public void populateTable(Object[][] data) {
         model.setRowCount(0);
         if (data != null) {
-            for (Object[] row : data) {
-                model.addRow(row);
-            }
+            for (Object[] row : data) model.addRow(row);
         }
     }
 
+    // --- Helpers ---
     private JLabel createStyledLabel(String text, Font font) {
         JLabel label = new JLabel(text);
         label.setFont(font);
