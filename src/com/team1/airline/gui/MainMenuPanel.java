@@ -91,7 +91,8 @@ public class MainMenuPanel extends JPanel {
         
         //3. 마이페이지 버튼
         JPanel myPageBtn = createMenuCard("👤", "마이페이지", "나의 개인정보를 확인하고 수정하세요.", e -> {
-            //마이페이지 이동 추가
+            mainApp.showPanel("MYPAGE");
+        	//마이페이지 이동 추가
         });
         
         // 레이아웃 배치
