@@ -169,6 +169,7 @@ public class PaymentHistoryPanel extends JPanel {
                     eastPriceLabel.setText("₩0");
                     
                     JOptionPane.showMessageDialog(this, "예약이 정상적으로 취소되었습니다.");
+                    loadPaymentHistory(); // Reload data from backend
                 } else {
                     JOptionPane.showMessageDialog(this, "예약 취소에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
                 }
@@ -199,9 +200,12 @@ public class PaymentHistoryPanel extends JPanel {
     private void initSelectionListener() {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int row = table.getSelectedRow();
-                if (row >= 0 && row < paymentRows.size()) {
-                    updateDetail(paymentRows.get(row));
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow != -1) {
+                    int modelRow = table.convertRowIndexToModel(selectedRow);
+                    if (modelRow >= 0 && modelRow < paymentRows.size()) {
+                        updateDetail(paymentRows.get(modelRow));
+                    }
                 }
             }
         });

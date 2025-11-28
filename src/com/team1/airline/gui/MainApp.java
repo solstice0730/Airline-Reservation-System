@@ -15,6 +15,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * [메인 프레임]
@@ -48,6 +49,8 @@ public class MainApp extends JFrame {
     private AirportDAO airportDAO;
     
     private FlightManageable flightService;
+    private UserManageable userService;
+    private ReservationManageable reservationService;
     private FlightController flightController;
     private ReservationController reservationController;
     
@@ -90,6 +93,10 @@ public class MainApp extends JFrame {
         airportDAO = new AirportDAOImpl();
 
         flightService = new FlightManager(flightDAO, routeDAO, aircraftDAO, reservationDAO);
+        userService = new UserManager(userDAO);
+        reservationService = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, airportDAO, flightService);
+
+        // Controllers
         flightController = new FlightController(flightService);
         
         // Reservation 관련
@@ -128,6 +135,15 @@ public class MainApp extends JFrame {
         cardPanel.add(myPagePanel, "MYPAGE");
 
         add(cardPanel);
+    }
+    
+    // --- Public Getters for Controllers ---
+    public UserController getUserController() {
+        return userController;
+    }
+    
+    public ReservationController getReservationController() {
+        return reservationController;
     }
 
     /**

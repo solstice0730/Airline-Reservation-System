@@ -140,6 +140,9 @@ public class FlightListPanel extends JPanel {
         table.getColumnModel().getColumn(5).setMinWidth(0);
         table.getColumnModel().getColumn(5).setMaxWidth(0);
         table.getColumnModel().getColumn(5).setWidth(0);
+        table.getColumnModel().getColumn(6).setMinWidth(0);
+        table.getColumnModel().getColumn(6).setMaxWidth(0);
+        table.getColumnModel().getColumn(6).setWidth(0);
 
         table.getColumnModel().getColumn(6).setMinWidth(0);
         table.getColumnModel().getColumn(6).setMaxWidth(0);

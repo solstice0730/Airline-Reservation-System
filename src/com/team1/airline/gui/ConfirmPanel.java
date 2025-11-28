@@ -1,5 +1,8 @@
 package com.team1.airline.gui;
 
+import com.team1.airline.entity.Reservation;
+import com.team1.airline.entity.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import com.team1.airline.entity.Reservation;
@@ -35,6 +38,8 @@ public class ConfirmPanel extends JPanel {
     
     private int originalPrice = 0;
     private int usedMileage = 0;
+
+    private String flightId;
 
     public ConfirmPanel(MainApp mainApp) {
         this.mainApp = mainApp;

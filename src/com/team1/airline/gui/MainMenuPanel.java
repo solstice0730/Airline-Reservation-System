@@ -1,5 +1,7 @@
 package com.team1.airline.gui;
 
+import com.team1.airline.entity.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -17,6 +19,8 @@ public class MainMenuPanel extends JPanel {
     private static final Color BG_COLOR = new Color(245, 248, 250);
     private static final Font FONT_BTN_TITLE = new Font("SansSerif", Font.BOLD, 20);
     private static final Font FONT_BTN_DESC = new Font("SansSerif", Font.PLAIN, 14);
+    
+    private JLabel welcomeLabel;
 
     public MainMenuPanel(MainApp mainApp) {
         this.mainApp = mainApp;
@@ -25,6 +29,15 @@ public class MainMenuPanel extends JPanel {
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createMenuGrid(), BorderLayout.CENTER);
+    }
+    
+    public void updateUserInfo() {
+        User currentUser = mainApp.getUserController().getCurrentUser();
+        if (currentUser != null) {
+            welcomeLabel.setText("환영합니다, " + currentUser.getUserName() + "님");
+        } else {
+            welcomeLabel.setText("환영합니다");
+        }
     }
 
     private JPanel createHeaderPanel() {
@@ -35,6 +48,16 @@ public class MainMenuPanel extends JPanel {
         JLabel titleLabel = new JLabel("Airline"); 
         titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 22));
         titleLabel.setForeground(PRIMARY_BLUE);
+        
+        welcomeLabel = new JLabel();
+        welcomeLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
+        welcomeLabel.setBorder(new EmptyBorder(0, 20, 0, 0));
+
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.add(titleLabel);
+        titlePanel.add(welcomeLabel);
+
 
         JButton logoutBtn = new JButton("로그아웃");
         logoutBtn.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
@@ -52,7 +75,7 @@ public class MainMenuPanel extends JPanel {
             }
         });
 
-        header.add(titleLabel, BorderLayout.WEST);
+        header.add(titlePanel, BorderLayout.WEST);
         header.add(logoutBtn, BorderLayout.EAST);
         
         JPanel wrapper = new JPanel(new BorderLayout());
