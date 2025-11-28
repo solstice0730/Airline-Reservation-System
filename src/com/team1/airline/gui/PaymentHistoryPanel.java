@@ -8,23 +8,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 결제 내역 확인 패널
+ * [결제 내역 패널]
+ * 사용자의 예약 내역을 리스트로 보여주고, 취소 기능을 제공합니다.
  */
 public class PaymentHistoryPanel extends JPanel {
 
     private final MainApp mainApp;
     private final Color PRIMARY_BLUE = new Color(0, 122, 255);
 
-    // UI 컴포넌트
     private JLabel countLabel;
     private JTable table;
     private DefaultTableModel tableModel;
-    private JLabel eastAirlineLabel, eastRouteTimeLabel, eastSeatLabel, eastPriceLabel;
+    
+    private JLabel eastFlightNoLabel;
+    private JLabel eastRouteTimeLabel;
+    private JLabel eastSeatLabel;
+    private JLabel eastPriceLabel;
 
-    // 데이터
     private List<PaymentRow> paymentRows = new ArrayList<>();
 
-    // DTO 클래스
     public static class PaymentRow {
         private final String reservationNo, airline, flightNo, route, timeInfo, seatInfo, priceText;
         public PaymentRow(String rNo, String al, String fNo, String rt, String ti, String si, String pt) {
@@ -52,16 +54,6 @@ public class PaymentHistoryPanel extends JPanel {
         add(createEastPanel(), BorderLayout.EAST);
 
         initSelectionListener();
-    }
-    
-    public void loadPaymentHistory() {
-        if (mainApp.getUserController().isLoggedIn()) {
-            List<PaymentRow> rows = mainApp.getReservationController().getMyReservationDetails();
-            setPaymentRows(rows);
-        } else {
-            // Clear data if not logged in
-            setPaymentRows(new ArrayList<>());
-        }
     }
 
     private JPanel createTitlePanel() {
@@ -107,7 +99,8 @@ public class PaymentHistoryPanel extends JPanel {
         panel.setBackground(Color.WHITE);
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        tableModel = new DefaultTableModel(new Object[] { "예약번호", "항공사", "항공편번호", "경로" }, 0) {
+        // [예약번호, 항공편번호, 경로, 좌석번호]
+        tableModel = new DefaultTableModel(new Object[] { "예약번호", "항공편번호", "경로", "좌석번호" }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -126,7 +119,7 @@ public class PaymentHistoryPanel extends JPanel {
         panel.setBorder(new EmptyBorder(10, 3, 10, 10));
         panel.setPreferredSize(new Dimension(230, 0));
 
-        eastAirlineLabel = createLabel("-");
+        eastFlightNoLabel = createLabel("항공편: -"); 
         eastRouteTimeLabel = createLabel("-");
         eastSeatLabel = createLabel("-");
         eastPriceLabel = createLabel("₩0");
@@ -137,7 +130,7 @@ public class PaymentHistoryPanel extends JPanel {
         panel.add(new JSeparator());
         panel.add(Box.createVerticalStrut(10));
         
-        panel.add(eastAirlineLabel);
+        panel.add(eastFlightNoLabel);
         panel.add(eastRouteTimeLabel);
         panel.add(eastSeatLabel);
         panel.add(Box.createVerticalStrut(10));
@@ -155,17 +148,26 @@ public class PaymentHistoryPanel extends JPanel {
                 return;
             }
 
-            PaymentRow rowData = paymentRows.get(table.convertRowIndexToModel(selectedRow));
+            PaymentRow rowData = paymentRows.get(selectedRow);
             String reservationNo = rowData.getReservationNo();
 
             int confirm = JOptionPane.showConfirmDialog(this, 
-                    "정말로 선택하신 예약을 취소하시겠습니까?\n예약번호: " + reservationNo,
+                    "정말로 선택하신 예약을 취소하시겠습니까?\n(취소 시 적립된 마일리지는 회수됩니다)",
                     "예약 취소 확인", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 boolean success = mainApp.getReservationController().cancelReservation(reservationNo);
 
                 if (success) {
+                    paymentRows.remove(selectedRow);
+                    tableModel.removeRow(selectedRow);
+                    countLabel.setText(paymentRows.size() + "개의 결제내역이 있습니다.");
+                    
+                    eastFlightNoLabel.setText("항공편: -");
+                    eastRouteTimeLabel.setText("-");
+                    eastSeatLabel.setText("-");
+                    eastPriceLabel.setText("₩0");
+                    
                     JOptionPane.showMessageDialog(this, "예약이 정상적으로 취소되었습니다.");
                     loadPaymentHistory(); // Reload data from backend
                 } else {
@@ -210,7 +212,7 @@ public class PaymentHistoryPanel extends JPanel {
     }
 
     private void updateDetail(PaymentRow pr) {
-        eastAirlineLabel.setText("항공사: " + pr.getAirline());
+        eastFlightNoLabel.setText("항공편: " + pr.getFlightNo());
         eastRouteTimeLabel.setText("<html>" + pr.getRoute() + "<br>" + pr.getTimeInfo() + "</html>");
         eastSeatLabel.setText("좌석번호: " + pr.getSeatInfo());
         eastPriceLabel.setText(pr.getPriceText());
@@ -220,16 +222,13 @@ public class PaymentHistoryPanel extends JPanel {
         this.paymentRows = (rows != null) ? rows : new ArrayList<>();
         tableModel.setRowCount(0);
         for (PaymentRow row : this.paymentRows) {
-            tableModel.addRow(new Object[] { row.getReservationNo(), row.getAirline(), row.getFlightNo(), row.getRoute() });
+            tableModel.addRow(new Object[] { 
+                row.getReservationNo(), 
+                row.getFlightNo(), 
+                row.getRoute(),
+                row.getSeatInfo()
+            });
         }
         countLabel.setText(this.paymentRows.size() + "개의 결제내역이 있습니다.");
-        
-        // Clear details if list is empty
-        if (this.paymentRows.isEmpty()) {
-            eastAirlineLabel.setText("-");
-            eastRouteTimeLabel.setText("-");
-            eastSeatLabel.setText("-");
-            eastPriceLabel.setText("₩0");
-        }
     }
 }

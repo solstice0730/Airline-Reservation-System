@@ -1,39 +1,46 @@
 package com.team1.airline.gui;
 
+import com.team1.airline.dao.UserDAO;
+import com.team1.airline.dao.impl.UserDAOImpl;
+import com.team1.airline.entity.User;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
- * 회원가입 화면
- * - 사용자 정보 입력 및 유효성 검사
+ * [회원가입 패널]
+ * 신규 사용자 등록 및 아이디 중복 검사
  */
 public class SignUpPanel extends JPanel {
 
     private final MainApp mainApp;
+    private final UserDAO userDAO; 
+    
     private final Color PRIMARY_BLUE = new Color(0, 122, 255);
     private final Font LABEL_FONT = new Font("SansSerif", Font.BOLD, 14);
     private final Font INPUT_FONT = new Font("SansSerif", Font.PLAIN, 14);
 
-    // 입력 필드
     private JTextField idField;
     private JPasswordField pwField;
     private JPasswordField pwConfirmField;
     private JTextField nameField;
     private JTextField passportField;
     private JTextField phoneField;
+    
+    private boolean isIdChecked = false; // 중복 확인 여부
 
     public SignUpPanel(MainApp mainApp) {
         this.mainApp = mainApp;
+        this.userDAO = new UserDAOImpl();
+        
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
         JPanel centerContainer = new JPanel(new GridBagLayout());
         centerContainer.setBackground(Color.WHITE);
-
-        JPanel formPanel = createFormPanel();
+        centerContainer.add(createFormPanel());
         
-        centerContainer.add(formPanel);
         add(centerContainer, BorderLayout.CENTER);
     }
 
@@ -43,7 +50,7 @@ public class SignUpPanel extends JPanel {
         formPanel.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
         formPanel.setPreferredSize(new Dimension(400, 680));
 
-        // 1. 헤더
+        // 헤더
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(PRIMARY_BLUE);
         headerPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -62,18 +69,17 @@ public class SignUpPanel extends JPanel {
 
         headerPanel.add(titleLabel, BorderLayout.CENTER);
         headerPanel.add(closeButton, BorderLayout.EAST);
-
         formPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // 2. 입력 필드들 (아이디, 비번, 이름, 여권번호, 전화번호)
+        // 입력 필드
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(Color.WHITE);
         contentPanel.setBorder(new EmptyBorder(20, 40, 20, 40));
 
-        // 아이디 + 중복확인 버튼
         contentPanel.add(createLabel("아이디"));
         contentPanel.add(Box.createVerticalStrut(5));
+        
         JPanel idPanel = new JPanel(new BorderLayout(5, 0));
         idPanel.setBackground(Color.WHITE);
         idPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -81,18 +87,19 @@ public class SignUpPanel extends JPanel {
         
         idField = new JTextField();
         idField.setFont(INPUT_FONT);
+        
         JButton checkButton = new JButton("중복 확인");
         checkButton.setFont(new Font("SansSerif", Font.BOLD, 12));
         checkButton.setBackground(Color.DARK_GRAY);
         checkButton.setForeground(Color.WHITE);
         checkButton.setFocusPainted(false);
+        checkButton.addActionListener(e -> handleCheckDuplicate());
         
         idPanel.add(idField, BorderLayout.CENTER);
         idPanel.add(checkButton, BorderLayout.EAST);
         contentPanel.add(idPanel);
+        
         contentPanel.add(Box.createVerticalStrut(15));
-
-        // 비밀번호
         contentPanel.add(createLabel("비밀번호/확인"));
         contentPanel.add(Box.createVerticalStrut(5));
         pwField = createPasswordField();
@@ -100,23 +107,20 @@ public class SignUpPanel extends JPanel {
         contentPanel.add(Box.createVerticalStrut(5));
         pwConfirmField = createPasswordField();
         contentPanel.add(pwConfirmField);
+        
         contentPanel.add(Box.createVerticalStrut(15));
-
-        // 이름
         contentPanel.add(createLabel("이름"));
         contentPanel.add(Box.createVerticalStrut(5));
         nameField = createTextField();
         contentPanel.add(nameField);
-        contentPanel.add(Box.createVerticalStrut(15));
 
-        // 여권번호
+        contentPanel.add(Box.createVerticalStrut(15));
         contentPanel.add(createLabel("여권번호"));
         contentPanel.add(Box.createVerticalStrut(5));
         passportField = createTextField();
         contentPanel.add(passportField);
-        contentPanel.add(Box.createVerticalStrut(15));
 
-        // 휴대전화
+        contentPanel.add(Box.createVerticalStrut(15));
         contentPanel.add(createLabel("휴대전화"));
         contentPanel.add(Box.createVerticalStrut(5));
         phoneField = createTextField();
@@ -124,7 +128,7 @@ public class SignUpPanel extends JPanel {
 
         formPanel.add(contentPanel, BorderLayout.CENTER);
 
-        // 3. 가입 완료 버튼
+        // 가입 버튼
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(0, 0, 30, 0));
@@ -136,7 +140,6 @@ public class SignUpPanel extends JPanel {
         signUpButton.setFont(new Font("SansSerif", Font.BOLD, 16));
         signUpButton.setFocusPainted(false);
         signUpButton.setBorder(null);
-
         signUpButton.addActionListener(e -> handleSignUp());
 
         bottomPanel.add(signUpButton);
@@ -145,18 +148,30 @@ public class SignUpPanel extends JPanel {
         return formPanel;
     }
 
-    /**
-     * 회원가입 처리 로직
-     */
+    private void handleCheckDuplicate() {
+        String userId = idField.getText().trim();
+        if (userId.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "아이디를 입력해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        User existingUser = userDAO.findByUserId(userId);
+        if (existingUser != null) {
+            JOptionPane.showMessageDialog(this, "이미 사용 중인 아이디입니다.", "중복 확인", JOptionPane.ERROR_MESSAGE);
+            isIdChecked = false;
+        } else {
+            int choice = JOptionPane.showConfirmDialog(this, "사용 가능한 아이디입니다. 사용하시겠습니까?", "중복 확인", JOptionPane.YES_NO_OPTION);
+            if (choice == JOptionPane.YES_OPTION) {
+                isIdChecked = true;
+                idField.setEditable(false);
+                idField.setBackground(new Color(240, 240, 240));
+            }
+        }
+    }
+
     private void handleSignUp() {
-        // 간단한 유효성 검사
-        if (idField.getText().isBlank() || 
-            new String(pwField.getPassword()).isBlank() ||
-            new String(pwConfirmField.getPassword()).isBlank() ||
-            nameField.getText().isBlank() ||
-            passportField.getText().isBlank() ||
-            phoneField.getText().isBlank()) {
-            
+        if (idField.getText().isBlank() || new String(pwField.getPassword()).isBlank() ||
+            nameField.getText().isBlank() || passportField.getText().isBlank() || phoneField.getText().isBlank()) {
             JOptionPane.showMessageDialog(this, "모든 정보를 입력해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -165,26 +180,37 @@ public class SignUpPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "비밀번호가 일치하지 않습니다.", "오류", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        
+        if (!isIdChecked) {
+            JOptionPane.showMessageDialog(this, "아이디 중복 확인을 해주세요.", "알림", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-        String userId = idField.getText();
-        String password = new String(pwField.getPassword());
-        String userName = nameField.getText();
-        String passportNumber = passportField.getText();
-        String phone = phoneField.getText();
+        boolean success = mainApp.getUserController().register(
+                idField.getText().trim(),
+                new String(pwField.getPassword()),
+                nameField.getText().trim(),
+                passportField.getText().trim(),
+                phoneField.getText().trim()
+        );
 
-        boolean registered = mainApp.getUserController().register(userId, password, userName, passportNumber, phone);
-
-        if (registered) {
-            JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다. 로그인 해주세요.", "회원가입 성공", JOptionPane.INFORMATION_MESSAGE);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "회원가입이 완료되었습니다.");
             clearFields();
             mainApp.showPanel("LOGIN");
         } else {
-            JOptionPane.showMessageDialog(this, "회원가입에 실패했습니다. 이미 존재하는 아이디일 수 있습니다.", "회원가입 실패", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "회원가입 실패. 다시 시도해주세요.", "오류", JOptionPane.ERROR_MESSAGE);
+            idField.setEditable(true);
+            idField.setBackground(Color.WHITE);
+            isIdChecked = false;
         }
     }
     
     private void clearFields() {
         idField.setText("");
+        idField.setEditable(true);
+        idField.setBackground(Color.WHITE);
+        isIdChecked = false;
         pwField.setText("");
         pwConfirmField.setText("");
         nameField.setText("");

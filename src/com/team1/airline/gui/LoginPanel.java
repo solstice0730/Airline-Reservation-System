@@ -7,14 +7,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * 로그인 화면
- * - 아이디/비밀번호 입력 및 회원가입 화면 이동 기능
+ * [로그인 패널]
+ * 사용자 ID/PW 입력 및 인증 처리
  */
 public class LoginPanel extends JPanel {
 
     private final MainApp mainApp;
-    
-    // 스타일 상수
     private final Color PRIMARY_BLUE = new Color(0, 122, 255);
     private final Font LABEL_FONT = new Font("SansSerif", Font.BOLD, 14);
     private final Font INPUT_FONT = new Font("SansSerif", Font.PLAIN, 14);
@@ -27,14 +25,10 @@ public class LoginPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 화면 중앙 배치를 위한 컨테이너
         JPanel centerContainer = new JPanel(new GridBagLayout());
         centerContainer.setBackground(Color.WHITE);
         
-        // 로그인 폼 패널 생성
-        JPanel formPanel = createFormPanel();
-        
-        centerContainer.add(formPanel);
+        centerContainer.add(createFormPanel());
         add(centerContainer, BorderLayout.CENTER);
     }
 
@@ -44,7 +38,7 @@ public class LoginPanel extends JPanel {
         formPanel.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
         formPanel.setPreferredSize(new Dimension(400, 450));
 
-        // 1. 헤더
+        // 상단 헤더
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(PRIMARY_BLUE);
         headerPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
@@ -56,7 +50,7 @@ public class LoginPanel extends JPanel {
         
         formPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // 2. 입력 필드 영역
+        // 입력 필드 영역
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(Color.WHITE);
@@ -93,7 +87,7 @@ public class LoginPanel extends JPanel {
 
         formPanel.add(contentPanel, BorderLayout.CENTER);
 
-        // 3. 하단 로그인 버튼
+        // 로그인 버튼
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         bottomPanel.setBackground(Color.WHITE);
         bottomPanel.setBorder(new EmptyBorder(0, 0, 30, 0));
@@ -106,24 +100,7 @@ public class LoginPanel extends JPanel {
         loginButton.setFocusPainted(false);
         loginButton.setBorder(null);
 
-        loginButton.addActionListener(e -> {
-            String userId = idField.getText();
-            String password = new String(pwField.getPassword());
-
-            if (userId.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "아이디와 비밀번호를 모두 입력해주세요.", "로그인 오류", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            boolean loggedIn = mainApp.getUserController().login(userId, password);
-
-            if (loggedIn) {
-                mainApp.showPanel("MAIN");
-            } else {
-                JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호가 일치하지 않습니다.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
-                pwField.setText(""); // 비밀번호 필드 초기화
-            }
-        });
+        loginButton.addActionListener(e -> performLogin());
 
         bottomPanel.add(loginButton);
         formPanel.add(bottomPanel, BorderLayout.SOUTH);
@@ -131,7 +108,24 @@ public class LoginPanel extends JPanel {
         return formPanel;
     }
 
-    // --- Helper Methods ---
+    private void performLogin() {
+        String userId = idField.getText();
+        String password = new String(pwField.getPassword());
+
+        // MainApp의 UserController를 통해 로그인 시도 (User 세션 생성)
+        boolean isLoginSuccess = mainApp.getUserController().login(userId, password);
+
+        if (isLoginSuccess) {
+            // 입력창 초기화
+            idField.setText("");
+            pwField.setText("");
+            JOptionPane.showMessageDialog(this, userId + "님 환영합니다!");
+            mainApp.showPanel("MAIN"); 
+        } else {
+            JOptionPane.showMessageDialog(this, "아이디 또는 비밀번호를 확인해주세요.", "로그인 실패", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(LABEL_FONT);
