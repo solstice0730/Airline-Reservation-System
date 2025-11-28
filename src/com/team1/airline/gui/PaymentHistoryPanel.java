@@ -169,7 +169,7 @@ public class PaymentHistoryPanel extends JPanel {
                     eastPriceLabel.setText("₩0");
                     
                     JOptionPane.showMessageDialog(this, "예약이 정상적으로 취소되었습니다.");
-                    loadPaymentHistory(); // Reload data from backend
+                    mainApp.updatePaymentHistoryData(); // Reload data from backend
                 } else {
                     JOptionPane.showMessageDialog(this, "예약 취소에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
                 }

@@ -5,6 +5,8 @@ import com.team1.airline.dao.*;
 import com.team1.airline.dao.impl.*;
 import com.team1.airline.entity.*;
 import com.team1.airline.service.FlightManageable;
+import com.team1.airline.service.ReservationManageable;
+import com.team1.airline.service.UserManageable;
 import com.team1.airline.service.impl.*;
 
 import javax.swing.*;
@@ -12,6 +14,7 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -39,18 +42,13 @@ public class MainApp extends JFrame {
 
     // --- 백엔드 구성요소 (DAO, Service, Controller) ---
     private UserDAO userDAO;
-    private UserController userController;
-    private DataManager dataManager;
-    
     private FlightDAO flightDAO;
     private RouteDAO routeDAO;
     private AircraftDAO aircraftDAO;
     private ReservationDAO reservationDAO;
     private AirportDAO airportDAO;
     
-    private FlightManageable flightService;
-    private UserManageable userService;
-    private ReservationManageable reservationService;
+    private UserController userController;
     private FlightController flightController;
     private ReservationController reservationController;
     
@@ -77,30 +75,24 @@ public class MainApp extends JFrame {
      * 데이터 매니저 로드 및 MVC 패턴의 Controller/Service/DAO 조립
      */
     private void initBackend() {
-        dataManager = DataManager.getInstance();
-        dataManager.loadAllData();
+        DataManager.getInstance().loadAllData();
 
-        // User 관련
+        // DAOs
         userDAO = new UserDAOImpl();
-        UserManager userManager = new UserManager(userDAO);
-        userController = new UserController(userManager);
-
-        // Flight 관련
         flightDAO = new FlightDAOImpl();
         routeDAO = new RouteDAOImpl();
         aircraftDAO = new AircraftDAOImpl();
         reservationDAO = new ReservationDAOImpl();
         airportDAO = new AirportDAOImpl();
 
-        flightService = new FlightManager(flightDAO, routeDAO, aircraftDAO, reservationDAO);
-        userService = new UserManager(userDAO);
-        reservationService = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, airportDAO, flightService);
+        // Services
+        UserManageable userManager = new UserManager(userDAO);
+        FlightManageable flightManager = new FlightManager(flightDAO, routeDAO, aircraftDAO, reservationDAO);
+        ReservationManageable reservationManager = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, airportDAO, flightManager);
 
         // Controllers
-        flightController = new FlightController(flightService);
-        
-        // Reservation 관련
-        ReservationManager reservationManager = new ReservationManager(reservationDAO, userDAO, flightDAO, routeDAO, flightService);
+        userController = new UserController(userManager);
+        flightController = new FlightController(flightManager);
         reservationController = new ReservationController(reservationManager, userController);
     }
 
@@ -135,15 +127,6 @@ public class MainApp extends JFrame {
         cardPanel.add(myPagePanel, "MYPAGE");
 
         add(cardPanel);
-    }
-    
-    // --- Public Getters for Controllers ---
-    public UserController getUserController() {
-        return userController;
-    }
-    
-    public ReservationController getReservationController() {
-        return reservationController;
     }
 
     /**
@@ -197,9 +180,9 @@ public class MainApp extends JFrame {
      * 예약 내역 데이터를 로드하여 PaymentHistoryPanel로 전달
      * (취소된 예약은 제외하고 필터링)
      */
-    private void updatePaymentHistoryData() {
+    public void updatePaymentHistoryData() {
         List<Reservation> myReservations = reservationController.getMyReservations();
-        java.util.List<PaymentHistoryPanel.PaymentRow> rows = new java.util.ArrayList<>();
+        List<PaymentHistoryPanel.PaymentRow> rows = new ArrayList<>();
 
         for (Reservation r : myReservations) {
             if ("Cancelled".equalsIgnoreCase(r.getStatus())) {
@@ -220,7 +203,6 @@ public class MainApp extends JFrame {
                 
                 String priceStr = String.format(Locale.KOREA, "%,.0f원", r.getFinalPrice());
 
-                // [주의] PaymentHistoryPanel 컬럼 순서에 맞춰 데이터 생성 (예약번호, 항공편, 경로, 좌석 등)
                 rows.add(new PaymentHistoryPanel.PaymentRow(
                         r.getReservationId(), 
                         "N/A", // 구 항공사 필드(사용안함)
@@ -245,7 +227,7 @@ public class MainApp extends JFrame {
     public List<String> getAllAirportNames() {
         return airportDAO.findAll().stream()
                 .map(Airport::getAirportName)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     /**
@@ -253,7 +235,6 @@ public class MainApp extends JFrame {
      * SearchPanel -> Controller -> FlightListPanel 로 데이터 흐름 제어
      */
     public void searchFlights(String departureName, String arrivalName, String departureDateStr, String returnDateStr, int economySeats, int businessSeats) {
-        // 인원수 저장 (추후 좌석 선택 시 사용)
         this.currentEconomySeats = economySeats;
         this.currentBusinessSeats = businessSeats;
         
@@ -277,7 +258,6 @@ public class MainApp extends JFrame {
 
         List<Flight> flights = flightController.searchFlights(departureCode, arrivalCode, departureDate);
         
-        // 테이블 데이터 구성 (7개 컬럼: 표시용 + 숨김용)
         Object[][] flightData = new Object[flights.size()][7];
 
         for (int i = 0; i < flights.size(); i++) {
@@ -296,12 +276,10 @@ public class MainApp extends JFrame {
                 double basePrice = route.getPrice();
                 basePriceStr = String.format(Locale.KOREA, "%,.0f원", basePrice);
                 
-                // 총액 계산: (이코노미 * 1) + (비즈니스 * 2)
                 double totalPrice = (basePrice * economySeats) + (basePrice * 2.0 * businessSeats);
                 totalPriceStr = String.format(Locale.KOREA, "%,.0f원", totalPrice);
             }
 
-            // [데이터 구조] 항공편, 출발, 도착, 소요시간, 정가(표시용), RouteId(숨김), 총액(숨김)
             flightData[i] = new Object[] { flightCode, depTime, arrTime, duration, basePriceStr, flight.getRouteId(), totalPriceStr };
         }
 
@@ -324,21 +302,18 @@ public class MainApp extends JFrame {
             return;
         }
         
-        // 이미 예약된 좌석 목록 조회
         List<Reservation> reservations = reservationDAO.findReservationsByFlightId(flightId);
-        java.util.List<String> occupiedSeats = new java.util.ArrayList<>();
+        List<String> occupiedSeats = new ArrayList<>();
         for(Reservation r : reservations) {
             if("Confirmed".equals(r.getStatus()) || "Paid".equals(r.getStatus())) {
                 occupiedSeats.add(r.getSeatNumber());
             }
         }
 
-        // 좌석 선택 창 표시 (인원수 전달)
         SeatSelectionDialog dialog = new SeatSelectionDialog(
                 this, aircraft, occupiedSeats, currentBusinessSeats, currentEconomySeats);
         dialog.setVisible(true);
 
-        // 선택 완료 후 좌석 정보 받기
         String selectedSeats = dialog.getSelectedSeats();
         if (selectedSeats != null && !selectedSeats.isEmpty()) {
             confirmFlight(flightId, selectedSeats, routeShort, routeLong, departureDate, returnDate, time, person, price);
