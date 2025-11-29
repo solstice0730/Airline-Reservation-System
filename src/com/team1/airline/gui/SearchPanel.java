@@ -2,6 +2,7 @@ package com.team1.airline.gui;
 
 import com.team1.airline.entity.User;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.time.LocalDate;
@@ -9,77 +10,50 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
 /**
- * [검색 화면 패널]
- * 항공편 검색 조건(출발/도착지, 날짜, 인원)을 입력받는 화면.
+ * [항공권 검색 화면]
+ * - 출발지, 도착지, 날짜, 인원 수를 입력받습니다.
+ * - 입력된 정보는 하단의 요약 패널과 상단의 검색 박스에 실시간으로 반영(동기화)됩니다.
  */
 public class SearchPanel extends JPanel {
 
     private final MainApp mainApp;
-
-    private static final Font FONT_TITLE = new Font("SansSerif", Font.BOLD, 28);
-    private static final Font FONT_LABEL = new Font("SansSerif", Font.BOLD, 16);
-    private static final Font FONT_INFO  = new Font("SansSerif", Font.PLAIN, 14);
-    private static final Color COLOR_BG_GRAY = new Color(245, 245, 245);
-    private static final Color COLOR_PRIMARY = new Color(0, 122, 255);
-
-    private JTextField departureField;
-    private JTextField arrivalField;
-    private JTextField departureDateField;
-    private JTextField returnDateField;
-    private JLabel userLabel; // 사용자 이름 표시
-
-    private int economySeats  = 1;
-    private int businessSeats = 0;
+    private JTextField departureField, arrivalField, departureDateField, returnDateField;
+    private JLabel userLabel;
     
-    private JLabel seatSummaryLabel;
-    private JLabel routeSummaryLabel;
-    private JLabel dateSummaryLabel;
-    private JLabel bottomSeatLabel;
+    // 상단 검색 박스 내의 인원 표시 라벨 (JTextField로 변경하여 크기 고정됨)
+    private JTextField seatSummaryLabel; 
+    
+    // 하단 요약 정보 라벨들
+    private JLabel routeSummaryLabel, dateSummaryLabel, bottomSeatLabel; 
+    
+    // 선택된 인원 수 상태 저장
+    private int economySeats = 1, businessSeats = 0;
 
     public SearchPanel(MainApp mainApp) {
         this.mainApp = mainApp;
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(850, 400));
+        setBackground(UITheme.BG_COLOR);
+        setPreferredSize(new Dimension(850, 500));
 
-        add(createTitlePanel(), BorderLayout.NORTH);
+        // 공통 타이틀 적용
+        add(UITheme.createTitlePanel(mainApp, "항공권 검색", "MAIN"), BorderLayout.NORTH);
         add(createFormPanel(),  BorderLayout.CENTER);
         add(createBottomPanel(), BorderLayout.SOUTH);
     }
 
-    // --- UI 구성 메서드들 ---
-
-    private JPanel createTitlePanel() {
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        titlePanel.setBackground(COLOR_PRIMARY);
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-
-        JLabel titleLabel = new JLabel("항공권 검색", SwingConstants.CENTER);
-        titleLabel.setFont(FONT_TITLE);
-        titleLabel.setForeground(Color.WHITE);
-        titlePanel.add(titleLabel, BorderLayout.CENTER);
-
-        JButton closeButton = new JButton("X");
-        closeButton.setForeground(Color.WHITE);
-        closeButton.setBackground(COLOR_PRIMARY);
-        closeButton.setBorder(null);
-        closeButton.setFocusPainted(false);
-        closeButton.setFont(FONT_LABEL);
-        closeButton.addActionListener(e -> mainApp.showPanel("MAIN"));
-        titlePanel.add(closeButton, BorderLayout.EAST);
-
-        return titlePanel;
-    }
-
     private JPanel createFormPanel() {
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(Color.WHITE);
-        root.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
+        UITheme.RoundedPanel root = new UITheme.RoundedPanel(30, Color.WHITE);
+        root.setLayout(new BorderLayout());
+        JPanel wrapper = new JPanel(new GridBagLayout());
+        wrapper.setOpaque(false);
+        wrapper.setBorder(new EmptyBorder(20, 40, 20, 40));
+        
+        root.setBorder(new EmptyBorder(30, 30, 30, 30));
         root.add(createUserPanel(), BorderLayout.NORTH);
 
         JPanel searchBarPanel = createSearchBarPanel();
-        searchBarPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
-
+        searchBarPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        
         JPanel summaryPanel = createSummaryPanel();
 
         JPanel centerStack = new JPanel();
@@ -89,37 +63,41 @@ public class SearchPanel extends JPanel {
         centerStack.add(summaryPanel);
 
         root.add(centerStack, BorderLayout.CENTER);
-        return root;
+        
+        wrapper.add(root);
+        return wrapper;
     }
 
+    /**
+     * 상단 사용자 환영 메시지 패널
+     */
     private JPanel createUserPanel() {
         JPanel userPanel = new JPanel(new BorderLayout());
         userPanel.setOpaque(false);
-        
         userLabel = new JLabel("사용자님");
-        userLabel.setFont(FONT_LABEL);
-        updateUserName(); // 초기화 시 이름 설정
-
+        userLabel.setFont(UITheme.FONT_SUBTITLE);
+        userLabel.setForeground(UITheme.PRIMARY_BLUE);
+        updateUserName(); 
         userPanel.add(userLabel, BorderLayout.WEST);
         return userPanel;
     }
     
-    /**
-     * MainApp에서 화면 전환 시 호출하여 사용자 이름을 최신 상태로 갱신
-     */
     public void updateUserName() {
         if (mainApp.getUserController() != null && mainApp.getUserController().isLoggedIn()) {
             User currentUser = mainApp.getUserController().getCurrentUser();
-            userLabel.setText(currentUser.getUserName() + "님");
+            userLabel.setText("반갑습니다, " + currentUser.getUserName() + "님");
         } else {
             userLabel.setText("비회원님");
         }
     }
 
+    /**
+     * 5개의 검색 조건 박스(출발, 도착, 가는날, 오는날, 인원)를 배치하는 패널
+     */
     private JPanel createSearchBarPanel() {
         JPanel searchBarPanel = new JPanel();
         searchBarPanel.setOpaque(false);
-        searchBarPanel.setLayout(new GridLayout(1, 5, 0, 0));
+        searchBarPanel.setLayout(new GridLayout(1, 5, 10, 0)); 
 
         searchBarPanel.add(createBox("출발지", true, false));
         searchBarPanel.add(createBox("도착지", false, false));
@@ -131,42 +109,42 @@ public class SearchPanel extends JPanel {
     }
     
     /**
-     * 반복되는 입력 박스 생성 헬퍼 메서드
+     * 일반 검색 박스 생성 (공항 또는 날짜 선택)
      */
     private JPanel createBox(String title, boolean isFirst, boolean isDate) {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setBackground(Color.WHITE);
-        box.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
+        UITheme.RoundedPanel box = new UITheme.RoundedPanel(15, Color.WHITE);
+        box.setLayout(new BorderLayout());
+        box.setDrawBorder(true);
         
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+        titleLabel.setFont(UITheme.FONT_BOLD);
+        titleLabel.setForeground(Color.GRAY);
+        titleLabel.setBorder(new EmptyBorder(10, 10, 0, 5));
         box.add(titleLabel, BorderLayout.NORTH);
         
-        JTextField tf = new JTextField(isDate ? "날짜를 선택하세요" : (isFirst ? "출발지를 선택하세요" : "도착지를 선택하세요"));
+        JTextField tf = new JTextField(isDate ? "날짜 선택" : (isFirst ? "출발지" : "도착지"));
         tf.setEditable(false);
-        tf.setFont(FONT_INFO);
+        tf.setFont(UITheme.FONT_PLAIN);
         tf.setBorder(null);
         tf.setOpaque(false);
         tf.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         
-        // 필드 참조 저장
-        if (isDate) {
-            if (isFirst) departureDateField = tf; else returnDateField = tf;
-        } else {
-            if (isFirst) departureField = tf; else arrivalField = tf;
-        }
+        // [중요] 텍스트가 길어져도 박스 크기가 늘어나지 않도록 컬럼 수 고정
+        tf.setColumns(8); 
+
+        if (isDate) { if (isFirst) departureDateField = tf; else returnDateField = tf; } 
+        else { if (isFirst) departureField = tf; else arrivalField = tf; }
 
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.setOpaque(false);
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+        inputPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
         
-        if (isDate) inputPanel.add(new JLabel("📅"), BorderLayout.WEST);
+        if (isDate) inputPanel.add(new JLabel("📅 "), BorderLayout.WEST);
         inputPanel.add(tf, BorderLayout.CENTER);
-        if (!isDate) inputPanel.add(new JLabel("▼"), BorderLayout.EAST); // 공항 선택 화살표
         
         box.add(inputPanel, BorderLayout.CENTER);
         
-        // 클릭 리스너 연결
+        // 클릭 이벤트 연결
         MouseAdapter clickListener = new MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -175,24 +153,39 @@ public class SearchPanel extends JPanel {
             }
         };
         addClickListenerToAll(box, clickListener);
-        
         return box;
     }
 
+    /**
+     * 인원 선택 박스 생성
+     */
     private JPanel createSeatBox() {
-        JPanel box = new JPanel(new BorderLayout());
-        box.setBackground(Color.WHITE);
-        box.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
+        UITheme.RoundedPanel box = new UITheme.RoundedPanel(15, Color.WHITE);
+        box.setLayout(new BorderLayout());
+        box.setDrawBorder(true);
         
-        box.add(new JLabel(" 인원"), BorderLayout.NORTH);
+        JLabel t = new JLabel("인원");
+        t.setFont(UITheme.FONT_BOLD);
+        t.setForeground(Color.GRAY);
+        t.setBorder(new EmptyBorder(10, 10, 0, 5));
+        box.add(t, BorderLayout.NORTH);
         
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setOpaque(false);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
-        contentPanel.add(new JLabel("👤"), BorderLayout.WEST);
+        contentPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
+        contentPanel.add(new JLabel("👤 "), BorderLayout.WEST);
         
-        seatSummaryLabel = new JLabel(buildSeatSummaryText(economySeats, businessSeats));
-        seatSummaryLabel.setFont(FONT_INFO);
+        // JTextField를 사용하여 내용이 길어져도 UI가 깨지지 않게 함
+        seatSummaryLabel = new JTextField(buildSeatSummaryText(economySeats, businessSeats));
+        seatSummaryLabel.setFont(UITheme.FONT_PLAIN);
+        seatSummaryLabel.setEditable(false);
+        seatSummaryLabel.setBorder(null);
+        seatSummaryLabel.setOpaque(false);
+        seatSummaryLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        // 텍스트가 길어져도 박스 크기가 늘어나지 않도록 컬럼 수 고정
+        seatSummaryLabel.setColumns(8);
+
         contentPanel.add(seatSummaryLabel, BorderLayout.CENTER);
         
         box.add(contentPanel, BorderLayout.CENTER);
@@ -205,21 +198,24 @@ public class SearchPanel extends JPanel {
         return box;
     }
 
+    /**
+     * 하단 요약 패널 (선택된 조건들을 텍스트로 보여줌)
+     */
     private JPanel createSummaryPanel() {
         JPanel summaryPanel = new JPanel(new BorderLayout());
         summaryPanel.setOpaque(false);
-        summaryPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 0, 40));
+        summaryPanel.setBorder(new EmptyBorder(30, 20, 0, 20));
 
-        routeSummaryLabel = new JLabel(); routeSummaryLabel.setFont(FONT_INFO);
-        dateSummaryLabel = new JLabel();  dateSummaryLabel.setFont(FONT_INFO);
-        bottomSeatLabel = new JLabel();   bottomSeatLabel.setFont(FONT_INFO);
+        routeSummaryLabel = new JLabel(); routeSummaryLabel.setFont(UITheme.FONT_BOLD);
+        dateSummaryLabel = new JLabel();  dateSummaryLabel.setFont(UITheme.FONT_BOLD);
+        bottomSeatLabel = new JLabel();   bottomSeatLabel.setFont(UITheme.FONT_BOLD);
 
         JPanel list = new JPanel();
         list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
         list.setOpaque(false);
         
         list.add(createSummaryRow("✈️", routeSummaryLabel));
-        list.add(createSummaryRow("📆  ", dateSummaryLabel));
+        list.add(createSummaryRow("📆 ", dateSummaryLabel));
         list.add(createSummaryRow("👤", bottomSeatLabel));
 
         summaryPanel.add(list, BorderLayout.WEST);
@@ -228,17 +224,21 @@ public class SearchPanel extends JPanel {
     }
 
     private JPanel createSummaryRow(String icon, JLabel label) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         row.setOpaque(false);
         row.add(new JLabel(icon));
         row.add(label);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
         return row;
     }
-
+    
+    /**
+     * [UI 업데이트] 모든 입력 필드의 변경 사항을 감지하여 UI를 동기화합니다.
+     * 상단 검색 박스와 하단 요약 패널을 모두 업데이트합니다.
+     */
     public void updateSummary() {
         if (routeSummaryLabel == null) return;
+        
         String dep = getSafeText(departureField);
         String arr = getSafeText(arrivalField);
         routeSummaryLabel.setText(dep + " -> " + arr);
@@ -247,13 +247,17 @@ public class SearchPanel extends JPanel {
         String rDate = getSafeDateText(returnDateField);
         dateSummaryLabel.setText(dDate + " ~ " + rDate);
         
-        bottomSeatLabel.setText(buildSeatSummaryText(economySeats, businessSeats));
+        String seatText = buildSeatSummaryText(economySeats, businessSeats);
+        bottomSeatLabel.setText(seatText); // 하단 요약 업데이트
+        
+        if (seatSummaryLabel != null) {
+            seatSummaryLabel.setText(seatText); // 상단 검색 박스 업데이트
+        }
     }
 
-    public String getSeatSummaryForResult() {
-        return buildSeatSummaryText(economySeats, businessSeats);
-    }
-
+    public String getSeatSummaryForResult() { return buildSeatSummaryText(economySeats, businessSeats); }
+    
+    // 인원 수 텍스트 생성
     private String buildSeatSummaryText(int econ, int biz) {
         StringBuilder sb = new StringBuilder();
         if (econ > 0) sb.append("이코노미 ").append(econ).append("석");
@@ -263,19 +267,38 @@ public class SearchPanel extends JPanel {
         }
         return sb.length() == 0 ? "선택 안 함" : sb.toString();
     }
-
+    
+    // 텍스트 필드 값 안전 조회 (null 체크)
+    private String getSafeText(JTextField tf) {
+        if (tf == null || tf.getText().isBlank() || tf.getText().contains("선택")) return "-";
+        return tf.getText();
+    }
+    
+    private String getSafeDateText(JTextField tf) {
+        if (tf == null || tf.getText().isBlank() || tf.getText().contains("날짜")) return "-";
+        return tf.getText();
+    }
+    
+    // 컴포넌트와 자식들까지 클릭 리스너 재귀 등록
+    private void addClickListenerToAll(Component component, MouseAdapter listener) {
+        component.addMouseListener(listener);
+        if (component instanceof Container) {
+            for (Component child : ((Container) component).getComponents()) {
+                addClickListenerToAll(child, listener);
+            }
+        }
+    }
+    
     private JPanel createBottomPanel() {
         JPanel bottomPanel = new JPanel();
-        bottomPanel.setBackground(COLOR_BG_GRAY);
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+        bottomPanel.setBackground(UITheme.BG_COLOR);
+        bottomPanel.setBorder(new EmptyBorder(10, 0, 30, 0));
 
-        JButton searchButton = new JButton("항공권 검색");
-        searchButton.setFont(FONT_LABEL);
-        searchButton.setForeground(Color.WHITE);
-        searchButton.setBackground(COLOR_PRIMARY);
-        searchButton.setFocusPainted(false);
-        searchButton.setPreferredSize(new Dimension(300, 50));
-
+        UITheme.RoundedButton searchButton = new UITheme.RoundedButton("항공권 검색");
+        searchButton.setPreferredSize(new Dimension(300, 55));
+        searchButton.setFont(UITheme.FONT_SUBTITLE);
+        
+        // 검색 버튼 클릭 시 메인 앱으로 검색 요청
         searchButton.addActionListener(e -> {
             String depDate = departureDateField.getText().contains("날짜") ? "" : departureDateField.getText();
             String retDate = returnDateField.getText().contains("날짜") ? "" : returnDateField.getText();
@@ -286,168 +309,94 @@ public class SearchPanel extends JPanel {
         return bottomPanel;
     }
 
-    // --- Utility Methods ---
-    
-    private String getSafeText(JTextField tf) {
-        if (tf == null || tf.getText().isBlank() || tf.getText().contains("선택하세요")) return "-";
-        return tf.getText();
-    }
-    
-    private String getSafeDateText(JTextField tf) {
-        if (tf == null || tf.getText().isBlank() || tf.getText().contains("날짜")) return "-";
-        return tf.getText();
-    }
-
-    private void addClickListenerToAll(Component component, MouseAdapter listener) {
-        component.addMouseListener(listener);
-        if (component instanceof Container) {
-            for (Component child : ((Container) component).getComponents()) {
-                addClickListenerToAll(child, listener);
-            }
-        }
-    }
-
-    // --- Dialog Openers ---
+    // --- 각종 다이얼로그 (공항 선택, 인원 선택, 날짜 선택) ---
 
     private void openAirportSelectionDialog(JTextField targetField) {
         java.util.List<String> airportNames = mainApp.getAllAirportNames();
-        if (airportNames == null || airportNames.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "공항 데이터 없음", "오류", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        if (airportNames == null || airportNames.isEmpty()) { JOptionPane.showMessageDialog(this, "공항 데이터 없음"); return; }
         JComboBox<String> combo = new JComboBox<>(airportNames.toArray(new String[0]));
         if (JOptionPane.showConfirmDialog(this, combo, "공항 선택", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
             targetField.setText((String) combo.getSelectedItem());
             updateSummary();
         }
     }
-
+    
     private void openSeatSelectionDialog() {
         final int[] counts = { economySeats, businessSeats }; 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel(); panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(createCounterPanel("이코노미", counts, 0));
         panel.add(createCounterPanel("비즈니스", counts, 1));
-        
         if (JOptionPane.showConfirmDialog(this, panel, "인원 선택", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-            if (counts[0] + counts[1] <= 0) {
-                JOptionPane.showMessageDialog(this, "최소 1석 이상 선택해야 합니다.");
-                return;
-            }
-            economySeats = counts[0];
-            businessSeats = counts[1];
-            updateSummary();
+            if (counts[0] + counts[1] <= 0) { JOptionPane.showMessageDialog(this, "최소 1석 이상 선택해야 합니다."); return; }
+            economySeats = counts[0]; businessSeats = counts[1]; 
+            updateSummary(); 
         }
     }
     
     private JPanel createCounterPanel(String label, int[] counts, int idx) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel countLbl = new JLabel(String.valueOf(counts[idx]));
-        JButton minus = new JButton("-");
-        JButton plus = new JButton("+");
-        minus.addActionListener(e -> { 
-            if (counts[idx] > 0) { counts[idx]--; countLbl.setText(String.valueOf(counts[idx])); } 
-        });
-        plus.addActionListener(e -> { 
-            counts[idx]++; countLbl.setText(String.valueOf(counts[idx])); 
-        });
-        p.add(new JLabel(label));
-        p.add(minus);
-        p.add(countLbl);
-        p.add(plus);
-        return p;
+        JButton minus = new JButton("-"); JButton plus = new JButton("+");
+        minus.addActionListener(e -> { if (counts[idx] > 0) { counts[idx]--; countLbl.setText(String.valueOf(counts[idx])); } });
+        plus.addActionListener(e -> { counts[idx]++; countLbl.setText(String.valueOf(counts[idx])); });
+        p.add(new JLabel(label)); p.add(minus); p.add(countLbl); p.add(plus); return p;
     }
-
+    
     private void openDatePickerDialog(JTextField targetField) {
         Window window = SwingUtilities.getWindowAncestor(this);
         LocalDate initDate = LocalDate.now();
         try {
             String txt = targetField.getText();
-            if (!txt.contains("날짜") && !txt.isBlank()) {
-                initDate = LocalDate.parse(txt, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            }
+            if (!txt.contains("날짜") && !txt.isBlank()) initDate = LocalDate.parse(txt, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception ignored) {}
-        
         DatePickerDialog dialog = new DatePickerDialog(window, initDate);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
-        
-        if (dialog.isDateCleared()) {
-            targetField.setText("날짜를 선택하세요");
-        } else if (dialog.getSelectedDate() != null) {
-            targetField.setText(dialog.getSelectedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        }
+        if (dialog.isDateCleared()) targetField.setText("날짜를 선택하세요");
+        else if (dialog.getSelectedDate() != null) targetField.setText(dialog.getSelectedDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         updateSummary();
     }
-
-    // 내부 클래스: 날짜 선택 다이얼로그
+    
+    /** 내부 클래스: 간단한 날짜 선택 달력 다이얼로그 */
     private static class DatePickerDialog extends JDialog {
-        private LocalDate selectedDate;
-        private boolean dateCleared = false;
-        private YearMonth currentYearMonth;
-        private JPanel calendarPanel;
-        private JComboBox<Integer> yearCombo;
-        private JComboBox<Integer> monthCombo;
-
+        private LocalDate selectedDate; private boolean dateCleared = false; private YearMonth currentYearMonth;
+        private JPanel calendarPanel; private JComboBox<Integer> yearCombo; private JComboBox<Integer> monthCombo;
         DatePickerDialog(Window owner, LocalDate initialDate) {
             super(owner, "날짜 선택", Dialog.ModalityType.APPLICATION_MODAL);
             if (initialDate == null) initialDate = LocalDate.now();
             this.currentYearMonth = YearMonth.from(initialDate);
             setLayout(new BorderLayout(10, 10));
-
             JPanel top = new JPanel(new FlowLayout());
-            yearCombo = new JComboBox<>();
-            for (int y = initialDate.getYear() - 1; y <= initialDate.getYear() + 1; y++) yearCombo.addItem(y);
+            yearCombo = new JComboBox<>(); for (int y = initialDate.getYear() - 1; y <= initialDate.getYear() + 1; y++) yearCombo.addItem(y);
             yearCombo.setSelectedItem(initialDate.getYear());
-            monthCombo = new JComboBox<>();
-            for (int m = 1; m <= 12; m++) monthCombo.addItem(m);
+            monthCombo = new JComboBox<>(); for (int m = 1; m <= 12; m++) monthCombo.addItem(m);
             monthCombo.setSelectedItem(initialDate.getMonthValue());
-            top.add(new JLabel("연도:")); top.add(yearCombo);
-            top.add(new JLabel("월:")); top.add(monthCombo);
+            top.add(new JLabel("연도:")); top.add(yearCombo); top.add(new JLabel("월:")); top.add(monthCombo);
             add(top, BorderLayout.NORTH);
-
-            calendarPanel = new JPanel(new GridLayout(0, 7, 5, 5));
-            add(calendarPanel, BorderLayout.CENTER);
-
+            calendarPanel = new JPanel(new GridLayout(0, 7, 5, 5)); add(calendarPanel, BorderLayout.CENTER);
             JPanel bottom = new JPanel(new FlowLayout());
-            JButton okBtn = new JButton("확인");
-            JButton clearBtn = new JButton("초기화");
-            JButton cancelBtn = new JButton("취소");
-            bottom.add(okBtn); bottom.add(clearBtn); bottom.add(cancelBtn);
-            add(bottom, BorderLayout.SOUTH);
-
-            yearCombo.addActionListener(e -> updateCalendar());
-            monthCombo.addActionListener(e -> updateCalendar());
-            okBtn.addActionListener(e -> dispose());
-            clearBtn.addActionListener(e -> { selectedDate = null; dateCleared = true; dispose(); });
+            JButton okBtn = new JButton("확인"); JButton clearBtn = new JButton("초기화"); JButton cancelBtn = new JButton("취소");
+            bottom.add(okBtn); bottom.add(clearBtn); bottom.add(cancelBtn); add(bottom, BorderLayout.SOUTH);
+            yearCombo.addActionListener(e -> updateCalendar()); monthCombo.addActionListener(e -> updateCalendar());
+            okBtn.addActionListener(e -> dispose()); clearBtn.addActionListener(e -> { selectedDate = null; dateCleared = true; dispose(); });
             cancelBtn.addActionListener(e -> { selectedDate = null; dateCleared = false; dispose(); });
-
-            rebuildCalendar();
-            pack();
+            rebuildCalendar(); pack();
         }
-        private void updateCalendar() {
-            currentYearMonth = YearMonth.of((Integer) yearCombo.getSelectedItem(), (Integer) monthCombo.getSelectedItem());
-            rebuildCalendar();
-        }
+        private void updateCalendar() { currentYearMonth = YearMonth.of((Integer) yearCombo.getSelectedItem(), (Integer) monthCombo.getSelectedItem()); rebuildCalendar(); }
         private void rebuildCalendar() {
             calendarPanel.removeAll();
             LocalDate firstDay = currentYearMonth.atDay(1);
-            int firstDow = firstDay.getDayOfWeek().getValue(); 
+            int firstDow = firstDay.getDayOfWeek().getValue();
             for (int i = 1; i < firstDow; i++) calendarPanel.add(new JLabel(" "));
             int length = currentYearMonth.lengthOfMonth();
             for (int d = 1; d <= length; d++) {
                 final int day = d;
                 JButton btn = new JButton(String.valueOf(day));
                 btn.setMargin(new Insets(2, 2, 2, 2));
-                btn.addActionListener(e -> {
-                    selectedDate = currentYearMonth.atDay(day);
-                    dispose();
-                });
+                btn.addActionListener(e -> { selectedDate = currentYearMonth.atDay(day); dispose(); });
                 calendarPanel.add(btn);
             }
-            calendarPanel.revalidate();
-            calendarPanel.repaint();
-            pack();
+            calendarPanel.revalidate(); calendarPanel.repaint(); pack();
         }
         public LocalDate getSelectedDate() { return selectedDate; }
         public boolean isDateCleared() { return dateCleared; }

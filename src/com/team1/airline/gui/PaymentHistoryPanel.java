@@ -8,25 +8,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * [결제 내역 패널]
- * 사용자의 예약 내역을 리스트로 보여주고, 취소 기능을 제공합니다.
+ * [결제/예약 내역 패널]
+ * - MainApp으로부터 전달받은 예약 목록을 JTable에 표시합니다.
+ * - 목록에서 항목을 선택하면 우측에 상세 정보가 나타납니다.
+ * - '예약 취소' 버튼을 통해 예약을 취소하고 마일리지를 회수할 수 있습니다.
  */
 public class PaymentHistoryPanel extends JPanel {
 
     private final MainApp mainApp;
-    private final Color PRIMARY_BLUE = new Color(0, 122, 255);
-
     private JLabel countLabel;
     private JTable table;
     private DefaultTableModel tableModel;
-    
-    private JLabel eastFlightNoLabel;
-    private JLabel eastRouteTimeLabel;
-    private JLabel eastSeatLabel;
-    private JLabel eastPriceLabel;
-
+    private JLabel eastFlightNoLabel, eastRouteTimeLabel, eastSeatLabel, eastPriceLabel;
     private List<PaymentRow> paymentRows = new ArrayList<>();
 
+    // 테이블 표시를 위한 DTO 클래스
     public static class PaymentRow {
         private final String reservationNo, airline, flightNo, route, timeInfo, seatInfo, priceText;
         public PaymentRow(String rNo, String al, String fNo, String rt, String ti, String si, String pt) {
@@ -44,169 +40,121 @@ public class PaymentHistoryPanel extends JPanel {
 
     public PaymentHistoryPanel(MainApp mainApp) {
         this.mainApp = mainApp;
-        setLayout(new BorderLayout(10, 10));
-        setBackground(Color.WHITE);
-        setPreferredSize(new Dimension(800, 400));
+        setLayout(new BorderLayout());
+        setBackground(UITheme.BG_COLOR);
+        setPreferredSize(new Dimension(900, 500));
 
-        add(createTitlePanel(), BorderLayout.NORTH);
-        add(createWestPanel(), BorderLayout.WEST);
-        add(createCenterPanel(), BorderLayout.CENTER);
-        add(createEastPanel(), BorderLayout.EAST);
+        add(UITheme.createTitlePanel(mainApp, "결제 내역", "MAIN"), BorderLayout.NORTH);
+        
+        JPanel content = new JPanel(new BorderLayout(15, 0));
+        content.setBackground(UITheme.BG_COLOR);
+        content.setBorder(new EmptyBorder(10, 20, 20, 20));
+        
+        content.add(createCenterPanel(), BorderLayout.CENTER);
+        content.add(createEastPanel(), BorderLayout.EAST);
+        
+        add(content, BorderLayout.CENTER);
 
         initSelectionListener();
     }
 
-    private JPanel createTitlePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(PRIMARY_BLUE);
-        panel.setBorder(new EmptyBorder(5, 10, 5, 10));
-
-        JLabel titleLabel = new JLabel("결제 내역", SwingConstants.CENTER);
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
-
-        JButton closeButton = new JButton("X");
-        closeButton.setForeground(Color.WHITE);
-        closeButton.setBackground(PRIMARY_BLUE);
-        closeButton.setBorder(null);
-        closeButton.setFocusPainted(false);
-        closeButton.addActionListener(e -> mainApp.showPanel("MAIN"));
-
-        panel.add(titleLabel, BorderLayout.CENTER);
-        panel.add(closeButton, BorderLayout.EAST);
-        return panel;
-    }
-
-    private JPanel createWestPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
-        panel.setPreferredSize(new Dimension(200, 0));
-
-        JLabel title = new JLabel("결제 내역");
-        title.setFont(new Font("SansSerif", Font.BOLD, 18));
-        countLabel = new JLabel("0개의 결제내역");
-        
-        panel.add(title);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(countLabel);
-        return panel;
-    }
-
+    // 중앙 테이블 패널 생성
     private JPanel createCenterPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
+        UITheme.RoundedPanel panel = new UITheme.RoundedPanel(20, Color.WHITE);
+        panel.setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // [예약번호, 항공편번호, 경로, 좌석번호]
-        tableModel = new DefaultTableModel(new Object[] { "예약번호", "항공편번호", "경로", "좌석번호" }, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+        countLabel = new JLabel("0개의 결제내역");
+        countLabel.setFont(UITheme.FONT_BOLD);
+        countLabel.setBorder(new EmptyBorder(0, 5, 10, 0));
+        panel.add(countLabel, BorderLayout.NORTH);
+
+        tableModel = new DefaultTableModel(new Object[] { "예약번호", "항공편", "경로", "좌석" }, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         table = new JTable(tableModel);
-        table.setRowHeight(24);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        UITheme.applyTableTheme(table);
         
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        
+        panel.add(scrollPane, BorderLayout.CENTER);
         return panel;
     }
 
+    // 우측 상세 정보 패널 생성
     private JPanel createEastPanel() {
-        JPanel panel = new JPanel();
+        UITheme.RoundedPanel panel = new UITheme.RoundedPanel(20, Color.WHITE);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(new EmptyBorder(10, 3, 10, 10));
-        panel.setPreferredSize(new Dimension(230, 0));
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setPreferredSize(new Dimension(280, 0));
 
+        panel.add(UITheme.createSectionTitle("선택 상세"));
+        
         eastFlightNoLabel = createLabel("항공편: -"); 
         eastRouteTimeLabel = createLabel("-");
-        eastSeatLabel = createLabel("-");
-        eastPriceLabel = createLabel("₩0");
-        eastPriceLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
-
-        panel.add(createLabel("선택 항공권", new Font("SansSerif", Font.BOLD, 16)));
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(new JSeparator());
-        panel.add(Box.createVerticalStrut(10));
+        eastSeatLabel = createLabel("좌석: -");
         
-        panel.add(eastFlightNoLabel);
-        panel.add(eastRouteTimeLabel);
-        panel.add(eastSeatLabel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(eastPriceLabel);
-        panel.add(Box.createVerticalStrut(15));
+        eastPriceLabel = new JLabel("₩0");
+        eastPriceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 22));
+        eastPriceLabel.setForeground(UITheme.TEXT_COLOR);
+        eastPriceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton cancelButton = new JButton("예약 취소");
-        cancelButton.setForeground(Color.WHITE);
-        cancelButton.setBackground(PRIMARY_BLUE);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(new JSeparator());
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(eastFlightNoLabel);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(eastRouteTimeLabel);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(eastSeatLabel);
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(eastPriceLabel);
+        panel.add(Box.createVerticalGlue());
+
+        UITheme.RoundedButton cancelButton = new UITheme.RoundedButton("예약 취소");
+        cancelButton.setBackground(Color.RED);
+        cancelButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        cancelButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         
         cancelButton.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
-            if (selectedRow == -1) {
-                JOptionPane.showMessageDialog(mainApp, "취소할 예약 내역을 선택해주세요.");
-                return;
-            }
-
-            PaymentRow rowData = paymentRows.get(selectedRow);
-            String reservationNo = rowData.getReservationNo();
-
-            int confirm = JOptionPane.showConfirmDialog(this, 
-                    "정말로 선택하신 예약을 취소하시겠습니까?\n(취소 시 적립된 마일리지는 회수됩니다)",
-                    "예약 취소 확인", JOptionPane.YES_NO_OPTION);
-
+            if (selectedRow == -1) { JOptionPane.showMessageDialog(mainApp, "취소할 내역 선택 필요"); return; }
+            String reservationNo = paymentRows.get(selectedRow).getReservationNo();
+            int confirm = JOptionPane.showConfirmDialog(this, "정말로 예약을 취소하시겠습니까?\n(마일리지 회수됨)", "확인", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
+                // 예약 취소 요청
                 boolean success = mainApp.getReservationController().cancelReservation(reservationNo);
-
                 if (success) {
                     paymentRows.remove(selectedRow);
                     tableModel.removeRow(selectedRow);
-                    countLabel.setText(paymentRows.size() + "개의 결제내역이 있습니다.");
-                    
-                    eastFlightNoLabel.setText("항공편: -");
-                    eastRouteTimeLabel.setText("-");
-                    eastSeatLabel.setText("-");
-                    eastPriceLabel.setText("₩0");
-                    
-                    JOptionPane.showMessageDialog(this, "예약이 정상적으로 취소되었습니다.");
-                    mainApp.updatePaymentHistoryData(); // Reload data from backend
+                    countLabel.setText(paymentRows.size() + "개의 결제내역");
+                    eastFlightNoLabel.setText("항공편: -"); eastRouteTimeLabel.setText("-"); eastSeatLabel.setText("-"); eastPriceLabel.setText("₩0");
+                    JOptionPane.showMessageDialog(this, "취소되었습니다.");
                 } else {
-                    JOptionPane.showMessageDialog(this, "예약 취소에 실패했습니다.", "오류", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "취소 실패.");
                 }
             }
         });
-
-        JPanel btnWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnWrapper.setBackground(Color.WHITE);
-        btnWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btnWrapper.add(cancelButton);
         
-        panel.add(btnWrapper);
-        panel.add(Box.createVerticalGlue());
+        panel.add(cancelButton);
         return panel;
     }
 
     private JLabel createLabel(String text) {
-        return createLabel(text, new Font("SansSerif", Font.PLAIN, 14));
-    }
-    
-    private JLabel createLabel(String text, Font font) {
         JLabel l = new JLabel(text);
-        l.setFont(font);
+        l.setFont(UITheme.FONT_PLAIN);
         l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
 
+    // 테이블 선택 리스너: 우측 상세 패널 업데이트
     private void initSelectionListener() {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow != -1) {
-                    int modelRow = table.convertRowIndexToModel(selectedRow);
-                    if (modelRow >= 0 && modelRow < paymentRows.size()) {
-                        updateDetail(paymentRows.get(modelRow));
-                    }
-                }
+                int row = table.getSelectedRow();
+                if (row >= 0 && row < paymentRows.size()) updateDetail(paymentRows.get(row));
             }
         });
     }
@@ -214,21 +162,17 @@ public class PaymentHistoryPanel extends JPanel {
     private void updateDetail(PaymentRow pr) {
         eastFlightNoLabel.setText("항공편: " + pr.getFlightNo());
         eastRouteTimeLabel.setText("<html>" + pr.getRoute() + "<br>" + pr.getTimeInfo() + "</html>");
-        eastSeatLabel.setText("좌석번호: " + pr.getSeatInfo());
+        eastSeatLabel.setText("좌석: " + pr.getSeatInfo());
         eastPriceLabel.setText(pr.getPriceText());
     }
 
+    // 데이터 갱신 메서드
     public void setPaymentRows(List<PaymentRow> rows) {
         this.paymentRows = (rows != null) ? rows : new ArrayList<>();
         tableModel.setRowCount(0);
         for (PaymentRow row : this.paymentRows) {
-            tableModel.addRow(new Object[] { 
-                row.getReservationNo(), 
-                row.getFlightNo(), 
-                row.getRoute(),
-                row.getSeatInfo()
-            });
+            tableModel.addRow(new Object[] { row.getReservationNo(), row.getFlightNo(), row.getRoute(), row.getSeatInfo() });
         }
-        countLabel.setText(this.paymentRows.size() + "개의 결제내역이 있습니다.");
+        if(countLabel!=null) countLabel.setText(this.paymentRows.size() + "개의 결제내역");
     }
 }
