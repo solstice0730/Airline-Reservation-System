@@ -23,7 +23,7 @@ public class ConfirmPanel extends JPanel {
 
     private String currentFlightId;
     private String currentSeatNumber;
-    
+
     private int originalPrice = 0;
     private int usedMileage = 0;
 
@@ -94,25 +94,25 @@ public class ConfirmPanel extends JPanel {
         confirmSeatLabel = new JLabel("선택한 좌석: -");
         confirmSeatLabel.setFont(UITheme.FONT_PLAIN);
 
-        confirmUserLabel = new JLabel("승객 성명: -"); 
+        confirmUserLabel = new JLabel("승객 성명: -");
         confirmUserLabel.setFont(UITheme.FONT_PLAIN);
-        
+
         confirmPriceLabel = new JLabel("₩0");
         confirmPriceLabel.setFont(new Font("맑은 고딕", Font.BOLD, 28));
         confirmPriceLabel.setForeground(UITheme.PRIMARY_BLUE);
-        
+
         discountLabel = new JLabel("");
         discountLabel.setFont(UITheme.FONT_PLAIN);
         discountLabel.setForeground(Color.RED);
 
         panel.add(confirmRouteLabel);
         panel.add(Box.createVerticalStrut(5));
-        panel.add(confirmSeatLabel); 
+        panel.add(confirmSeatLabel);
         panel.add(Box.createVerticalStrut(5));
         panel.add(confirmUserLabel);
-        
+
         panel.add(Box.createVerticalStrut(30));
-        
+
         JLabel totalLabel = new JLabel("총 결제 금액");
         totalLabel.setFont(UITheme.FONT_BOLD);
         panel.add(totalLabel);
@@ -130,17 +130,17 @@ public class ConfirmPanel extends JPanel {
         // 마일리지 패널
         JPanel mileagePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         mileagePanel.setOpaque(false);
-        
+
         availableMileageLabel = new JLabel("보유 마일리지: 0 P");
         availableMileageLabel.setFont(UITheme.FONT_BOLD);
         availableMileageLabel.setForeground(new Color(0, 100, 0));
-        
+
         useMileageButton = new UITheme.RoundedButton("사용하기");
         useMileageButton.setBackground(Color.GRAY);
         useMileageButton.setPreferredSize(new Dimension(100, 35));
         useMileageButton.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
         useMileageButton.addActionListener(e -> openMileageDialog());
-        
+
         mileagePanel.add(availableMileageLabel);
         mileagePanel.add(useMileageButton);
 
@@ -152,23 +152,25 @@ public class ConfirmPanel extends JPanel {
 
         mainPanel.add(mileagePanel, BorderLayout.NORTH);
         mainPanel.add(payButton, BorderLayout.CENTER);
-        
+
         return mainPanel;
     }
-    
+
     /**
      * 마일리지 사용 다이얼로그 호출
      * - 보유 마일리지 내에서 사용 금액을 입력받습니다.
      */
     private void openMileageDialog() {
-        if (!mainApp.getUserController().isLoggedIn()) return;
+        if (!mainApp.getUserController().isLoggedIn())
+            return;
         User user = mainApp.getUserController().getCurrentUser();
         int maxMileage = user.getMileage();
         if (maxMileage <= 0) {
             JOptionPane.showMessageDialog(this, "사용 가능한 마일리지가 없습니다.");
             return;
         }
-        String input = JOptionPane.showInputDialog(this, "사용할 마일리지 (보유: " + maxMileage + " P)\n(최대 사용: " + originalPrice + "원)", "0");
+        String input = JOptionPane.showInputDialog(this,
+                "사용할 마일리지 (보유: " + maxMileage + " P)\n(최대 사용: " + originalPrice + "원)", "0");
         if (input != null && !input.isBlank()) {
             try {
                 int amount = Integer.parseInt(input);
@@ -183,7 +185,7 @@ public class ConfirmPanel extends JPanel {
             }
         }
     }
-    
+
     // 마일리지 적용 후 최종 금액 표시 업데이트
     private void updatePriceDisplay() {
         int finalPrice = originalPrice - usedMileage;
@@ -203,7 +205,6 @@ public class ConfirmPanel extends JPanel {
      * [결제 처리 로직]
      * - 예약 생성 (ReservationController 호출)
      * - 마일리지 차감 처리
-     * - 중복 적립 방지 로직 포함
      */
     private void handlePayment() {
         if (currentSeatNumber == null || currentSeatNumber.isEmpty()) {
@@ -225,24 +226,23 @@ public class ConfirmPanel extends JPanel {
         if (successCount > 0) {
             int finalPaymentAmount = originalPrice - usedMileage;
             int mileageEarned = (int) (finalPaymentAmount * 0.05);
-            
-            // 사용한 마일리지 차감 (백엔드 로직이 이를 모를 수 있으므로 유지)
-            if (usedMileage > 0) mainApp.addMileage(-usedMileage);
-            
-            // [버그 수정] 마일리지 이중 적립 방지를 위해 GUI에서의 적립 코드를 제거
-            // makeReservation 호출 시 내부적으로 마일리지가 적립되므로 아래 코드는 중복입니다.
-            // mainApp.addMileage(mileageEarned); 
+
+            // 사용한 마일리지 차감
+            if (usedMileage > 0)
+                mainApp.addMileage(-usedMileage);
 
             // 사용자에게 적립 예정 금액은 그대로 안내 (실제 적립은 백엔드에서 수행됨)
-            if (usedMileage > 0) mainApp.addMileage(0); // 갱신 트리거용으로 0 호출 혹은 생략 가능
+            if (usedMileage > 0)
+                mainApp.addMileage(0); // 갱신 트리거용으로 0 호출 혹은 생략 가능
 
             String reservationIds = sb.toString();
-            if (reservationIds.length() > 2) reservationIds = reservationIds.substring(0, reservationIds.length() - 2);
+            if (reservationIds.length() > 2)
+                reservationIds = reservationIds.substring(0, reservationIds.length() - 2);
 
             String msg = String.format("예약 완료!\n(예약번호: %s)\n\n[결제] %,d원 (적립 +%,d P)",
                     reservationIds, finalPaymentAmount, mileageEarned);
             JOptionPane.showMessageDialog(mainApp, msg);
-            mainApp.showPanel("SEARCH");
+            mainApp.showPanel("MAIN");
         } else {
             JOptionPane.showMessageDialog(this, "예약 실패 (이미 예약된 좌석 등)", "오류", JOptionPane.ERROR_MESSAGE);
         }
@@ -258,23 +258,26 @@ public class ConfirmPanel extends JPanel {
     }
 
     // 외부에서 예약 데이터를 주입받는 메서드
-    public void setFlightDetails(String flightId, String seatNumber, String routeShort, String routeLong, String depDate, String retDate, String time, String person, String priceStr) {
+    public void setFlightDetails(String flightId, String seatNumber, String routeShort, String routeLong,
+            String depDate, String retDate, String time, String person, String priceStr) {
         this.currentFlightId = flightId;
         this.currentSeatNumber = seatNumber;
         try {
             String numberOnly = priceStr.replaceAll("[^0-9]", "");
             this.originalPrice = Integer.parseInt(numberOnly);
-        } catch (NumberFormatException e) { this.originalPrice = 0; }
-        this.usedMileage = 0; 
+        } catch (NumberFormatException e) {
+            this.originalPrice = 0;
+        }
+        this.usedMileage = 0;
 
-        routeArea.setText(routeShort); 
+        routeArea.setText(routeShort);
         timeLabel.setText(time);
         personLabel.setText(person);
         confirmRouteLabel.setText("선택한 항공권: " + routeLong);
         confirmSeatLabel.setText("선택한 좌석: " + seatNumber);
-        
+
         updatePriceDisplay();
-        
+
         if (mainApp.getUserController().isLoggedIn()) {
             User currentUser = mainApp.getUserController().getCurrentUser();
             confirmUserLabel.setText("승객 성명: " + currentUser.getUserName());
