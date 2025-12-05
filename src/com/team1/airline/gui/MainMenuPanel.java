@@ -1,7 +1,5 @@
 package com.team1.airline.gui;
 
-import com.team1.airline.entity.User;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -10,63 +8,43 @@ import java.awt.event.MouseEvent;
 
 /**
  * [메인 메뉴 패널]
- * 로그인 후 진입하는 첫 화면. 주요 기능(검색, 결제내역, 마이페이지)으로 이동하는 버튼 제공.
+ * - 로그인 후 처음으로 만나는 대시보드 화면입니다.
+ * - '항공권 예매', '결제 내역', '마이페이지' 3개의 주요 기능으로 이동하는 카드형 버튼을 제공합니다.
  */
 public class MainMenuPanel extends JPanel {
 
     private final MainApp mainApp;
-    private static final Color PRIMARY_BLUE = new Color(0, 122, 255);
-    private static final Color BG_COLOR = new Color(245, 248, 250);
-    private static final Font FONT_BTN_TITLE = new Font("SansSerif", Font.BOLD, 20);
-    private static final Font FONT_BTN_DESC = new Font("SansSerif", Font.PLAIN, 14);
-    
-    private JLabel welcomeLabel;
 
     public MainMenuPanel(MainApp mainApp) {
         this.mainApp = mainApp;
         setLayout(new BorderLayout());
-        setBackground(BG_COLOR);
+        setBackground(UITheme.BG_COLOR);
 
         add(createHeaderPanel(), BorderLayout.NORTH);
         add(createMenuGrid(), BorderLayout.CENTER);
     }
-    
-    public void updateUserInfo() {
-        User currentUser = mainApp.getUserController().getCurrentUser();
-        if (currentUser != null) {
-            welcomeLabel.setText("환영합니다, " + currentUser.getUserName() + "님");
-        } else {
-            welcomeLabel.setText("환영합니다");
-        }
-    }
 
+    /**
+     * 상단 헤더 생성 (로고 및 로그아웃 버튼)
+     */
     private JPanel createHeaderPanel() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
         header.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        JLabel titleLabel = new JLabel("Airline"); 
-        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 22));
-        titleLabel.setForeground(PRIMARY_BLUE);
-        
-        welcomeLabel = new JLabel();
-        welcomeLabel.setFont(new Font("맑은 고딕", Font.BOLD, 16));
-        welcomeLabel.setBorder(new EmptyBorder(0, 20, 0, 0));
-
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        titlePanel.setBackground(Color.WHITE);
-        titlePanel.add(titleLabel);
-        titlePanel.add(welcomeLabel);
-
+        JLabel titleLabel = new JLabel("Airline System"); 
+        titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 24));
+        titleLabel.setForeground(UITheme.PRIMARY_BLUE);
 
         JButton logoutBtn = new JButton("로그아웃");
-        logoutBtn.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+        logoutBtn.setFont(UITheme.FONT_PLAIN);
         logoutBtn.setForeground(Color.GRAY);
         logoutBtn.setBorderPainted(false);
         logoutBtn.setContentAreaFilled(false);
         logoutBtn.setFocusPainted(false);
         logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
+        // 로그아웃 처리
         logoutBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "로그아웃 하시겠습니까?", "로그아웃", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
@@ -75,23 +53,17 @@ public class MainMenuPanel extends JPanel {
             }
         });
 
-        header.add(titlePanel, BorderLayout.WEST);
+        header.add(titleLabel, BorderLayout.WEST);
         header.add(logoutBtn, BorderLayout.EAST);
-        
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.add(header, BorderLayout.CENTER);
-        // 구분선
-        JPanel line = new JPanel();
-        line.setBackground(new Color(230, 230, 230));
-        line.setPreferredSize(new Dimension(0, 1));
-        wrapper.add(line, BorderLayout.SOUTH);
-
-        return wrapper;
+        return header;
     }
 
+    /**
+     * 중앙 메뉴 그리드 생성 (3개의 카드 버튼 배치)
+     */
     private JPanel createMenuGrid() {
         JPanel gridPanel = new JPanel(new GridLayout(1, 3, 30, 0));
-        gridPanel.setBackground(BG_COLOR);
+        gridPanel.setBackground(UITheme.BG_COLOR);
         gridPanel.setBorder(new EmptyBorder(40, 40, 60, 40));
 
         JPanel searchBtn = createMenuCard("🛫", "항공권 예매", "국내/해외 항공권을 검색하고 예약하세요.", 
@@ -110,14 +82,14 @@ public class MainMenuPanel extends JPanel {
         return gridPanel;
     }
 
+    /**
+     * [카드형 메뉴 버튼 생성 메서드]
+     * - 아이콘, 제목, 설명, 클릭 이벤트를 받아 둥근 패널 형태의 버튼을 생성합니다.
+     */
     private JPanel createMenuCard(String icon, String title, String desc, java.awt.event.ActionListener action) {
-        JPanel card = new JPanel();
+        UITheme.RoundedPanel card = new UITheme.RoundedPanel(30, Color.WHITE);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true), 
-                new EmptyBorder(30, 30, 30, 30)
-        ));
+        card.setBorder(new EmptyBorder(30, 30, 30, 30));
         card.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         JLabel iconLabel = new JLabel(icon);
@@ -125,19 +97,19 @@ public class MainMenuPanel extends JPanel {
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(FONT_BTN_TITLE);
-        titleLabel.setForeground(new Color(50, 50, 50));
+        titleLabel.setFont(UITheme.FONT_SUBTITLE);
+        titleLabel.setForeground(UITheme.TEXT_COLOR);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setBackground(Color.WHITE);
         textPanel.setOpaque(false); 
         textPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
      
+        // 설명 텍스트 줄바꿈 처리
         for (String line : desc.split("\n")) {
             JLabel lineLabel = new JLabel(line, SwingConstants.CENTER);
-            lineLabel.setFont(FONT_BTN_DESC);
+            lineLabel.setFont(UITheme.FONT_PLAIN);
             lineLabel.setForeground(Color.GRAY);
             lineLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             textPanel.add(lineLabel);
@@ -152,19 +124,10 @@ public class MainMenuPanel extends JPanel {
         card.add(textPanel); 
         card.add(Box.createVerticalGlue());
         
+        // 클릭 리스너 등록
         card.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) { action.actionPerformed(null); }
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                card.setBackground(new Color(240, 248, 255)); 
-                card.setBorder(BorderFactory.createLineBorder(PRIMARY_BLUE, 2)); 
-            }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                card.setBackground(Color.WHITE);
-                card.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220), 1));
-            }
         });
         return card;
     }
